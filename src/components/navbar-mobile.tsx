@@ -80,52 +80,53 @@ export default function NavbarMobile({
         {isOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
       </button>
 
-      {/* Drawer Overlay Menu */}
+      {/* Premium High-Contrast Drawer Overlay Menu */}
       {isOpen && (
-        <div className="fixed inset-x-0 top-[77px] bottom-0 z-50 flex flex-col bg-surface/95 backdrop-blur-md border-t border-border animate-in fade-in slide-in-from-top-4 duration-200">
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-12">
-            {/* Logged In User Summary */}
+        <div className="fixed inset-x-0 top-[77px] bottom-0 z-50 flex flex-col bg-accent-green border-t border-white/10 animate-in fade-in slide-in-from-top-4 duration-200">
+          <div className="flex-1 overflow-y-auto p-6 space-y-7 pb-12">
+            
+            {/* User Profile Card (Frosted Glass Style) */}
             {user && (
-              <div className="flex items-center gap-3 border-b border-border/40 pb-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent-green font-heading text-sm font-bold text-white overflow-hidden">
+              <div className="flex items-center gap-3.5 bg-white/5 border border-white/10 rounded-2xl p-4.5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 font-heading text-sm font-bold text-accent-gold overflow-hidden border border-white/15">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
                   ) : (
                     initials
                   )}
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-ink truncate">{displayName}</p>
-                  {username && <p className="text-xs text-muted truncate">@{username}</p>}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-white truncate">{displayName}</p>
+                  {username && <p className="text-xs text-white/60 truncate">@{username}</p>}
                 </div>
               </div>
             )}
 
             {/* Main Navigation Links */}
-            <div className="space-y-4">
-              <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">Explore</span>
+            <div className="space-y-3">
+              <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider block">Explore Directory</span>
               <div className="grid grid-cols-2 gap-3">
                 <Link
                   href="/students"
-                  className="flex items-center justify-center rounded-xl bg-background border border-border/40 py-3.5 text-sm font-semibold text-ink hover:bg-surface-sunken transition-colors"
+                  className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:text-accent-gold transition-colors"
                 >
                   Talent
                 </Link>
                 <Link
                   href="/startups"
-                  className="flex items-center justify-center rounded-xl bg-background border border-border/40 py-3.5 text-sm font-semibold text-ink hover:bg-surface-sunken transition-colors"
+                  className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:text-accent-gold transition-colors"
                 >
                   Startups
                 </Link>
                 <Link
                   href="/communities"
-                  className="flex items-center justify-center rounded-xl bg-background border border-border/40 py-3.5 text-sm font-semibold text-ink hover:bg-surface-sunken transition-colors"
+                  className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:text-accent-gold transition-colors"
                 >
                   Communities
                 </Link>
                 <Link
                   href="/events"
-                  className="flex items-center justify-center rounded-xl bg-background border border-border/40 py-3.5 text-sm font-semibold text-ink hover:bg-surface-sunken transition-colors"
+                  className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:text-accent-gold transition-colors"
                 >
                   Events
                 </Link>
@@ -134,107 +135,107 @@ export default function NavbarMobile({
 
             {/* Dashboard / User Workspace Links */}
             {user ? (
-              <div className="space-y-4">
-                <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">Dashboard & Hub</span>
-                <div className="space-y-1 bg-background rounded-2xl p-2 border border-border/40">
+              <div className="space-y-3">
+                <span className="text-[10px] font-bold text-white/55 uppercase tracking-wider block">Builder Hub & Panel</span>
+                <div className="space-y-1 bg-black/15 rounded-2xl p-2 border border-white/5">
                   <Link
                     href="/dashboard"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <LayoutDashboard className="h-4.5 w-4.5 text-accent-green" />
+                    <LayoutDashboard className="h-4.5 w-4.5 text-accent-gold" />
                     Dashboard Home
                   </Link>
 
                   <Link
                     href="/dashboard?tab=edit"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <UserIcon className="h-4.5 w-4.5 text-accent-green" />
+                    <UserIcon className="h-4.5 w-4.5 text-accent-gold" />
                     Edit Profile
                   </Link>
 
                   {username && (
                     <Link
                       href={`/u/${username}`}
-                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                      className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                     >
-                      <ExternalLink className="h-4.5 w-4.5 text-accent-green" />
+                      <ExternalLink className="h-4.5 w-4.5 text-accent-gold" />
                       View Public Profile
                     </Link>
                   )}
 
                   <Link
                     href="/dashboard/messages"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <MessageSquare className="h-4.5 w-4.5 text-accent-green" />
+                    <MessageSquare className="h-4.5 w-4.5 text-accent-gold" />
                     Messages Inbox
                   </Link>
 
                   <Link
                     href="/dashboard/services"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <Briefcase className="h-4.5 w-4.5 text-accent-green" />
+                    <Briefcase className="h-4.5 w-4.5 text-accent-gold" />
                     Freelance Services
                   </Link>
 
                   <Link
                     href="/dashboard/startup"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <Rocket className="h-4.5 w-4.5 text-accent-green" />
+                    <Rocket className="h-4.5 w-4.5 text-accent-gold" />
                     Startup Workspace
                   </Link>
 
                   <Link
                     href="/dashboard/team"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <Building className="h-4.5 w-4.5 text-accent-green" />
+                    <Building className="h-4.5 w-4.5 text-accent-gold" />
                     Team & Agency Manager
                   </Link>
 
                   <Link
                     href="/dashboard/communities"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <Users className="h-4.5 w-4.5 text-accent-green" />
+                    <Users className="h-4.5 w-4.5 text-accent-gold" />
                     Community Panel
                   </Link>
 
                   <Link
                     href="/dashboard/settings"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-muted hover:text-ink hover:bg-surface transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <Settings className="h-4.5 w-4.5 text-accent-green" />
+                    <Settings className="h-4.5 w-4.5 text-accent-gold" />
                     Account Settings
                   </Link>
                 </div>
               </div>
             ) : null}
 
-            {/* Logged Out / Action CTA Row */}
+            {/* CTAs / Bottom Actions */}
             {!user ? (
-              <div className="flex flex-col gap-3 pt-4 border-t border-border/40">
+              <div className="flex flex-col gap-3 pt-5 border-t border-white/10">
                 <Link
                   href="/login"
-                  className="flex h-11 items-center justify-center rounded-full border border-border bg-surface text-sm font-semibold text-ink hover:bg-surface-sunken transition-colors"
+                  className="flex h-11 items-center justify-center rounded-full border border-white/20 bg-transparent text-sm font-semibold text-white hover:bg-white/5 transition-colors"
                 >
                   Log in
                 </Link>
                 <Link
                   href="/signup"
-                  className="flex h-11 items-center justify-center rounded-full bg-ink text-sm font-semibold text-white hover:opacity-90 transition-all duration-200"
+                  className="flex h-11 items-center justify-center rounded-full bg-accent-gold text-sm font-bold text-accent-gold-foreground hover:opacity-90 transition-all duration-200"
                 >
                   Sign up
                 </Link>
               </div>
             ) : (
-              <div className="pt-2 border-t border-border/40">
+              <div className="pt-3 border-t border-white/10">
                 <button
                   onClick={handleSignOut}
-                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold text-danger hover:bg-danger/5 transition-colors text-left cursor-pointer"
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-semibold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors text-left cursor-pointer"
                 >
                   <LogOut className="h-4.5 w-4.5" />
                   Sign Out
