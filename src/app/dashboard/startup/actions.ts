@@ -1,0 +1,214 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+
+async function requireUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  return { supabase, user };
+}
+
+export async function createStartup(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const name = String(formData.get("name") ?? "").trim();
+  const industry = String(formData.get("industry") ?? "").trim();
+  const stage = String(formData.get("stage") ?? "Idea").trim();
+  const idea = String(formData.get("idea") ?? "").trim();
+
+  if (!name || !industry || !idea) {
+    redirect("/dashboard/startup?error=Name, industry, and description/idea are required");
+  }
+
+  const slug =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") +
+    "-" +
+    Math.floor(1000 + Math.random() * 9000);
+
+  const { error } = await supabase.from("startups").insert({
+    founder_id: user.id,
+    name,
+    slug,
+    industry,
+    stage,
+    idea,
+  });
+
+  if (error) {
+    redirect(`/dashboard/startup?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/dashboard/startup");
+  revalidatePath("/startups");
+  redirect("/dashboard/startup");
+}
+
+export async function updateStartup(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const industry = String(formData.get("industry") ?? "").trim();
+  const stage = String(formData.get("stage") ?? "Idea").trim();
+  const idea = String(formData.get("idea") ?? "").trim();
+
+  if (!id || !name || !industry || !idea) {
+    redirect("/dashboard/startup?error=Missing required fields");
+  }
+
+  const { error } = await supabase
+    .from("startups")
+    .update({ name, industry, stage, idea })
+    .eq("id", id)
+    .eq("founder_id", user.id); // ownership enforced
+
+  if (error) {
+    redirect(`/dashboard/startup?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/dashboard/startup");
+  revalidatePath("/startups");
+  redirect("/dashboard/startup");
+}
+
+// ✅ SECURITY FIX: verify caller owns the startup before adding a role
+export async function addStartupRole(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const startup_id = String(formData.get("startup_id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const commitment = String(formData.get("commitment") ?? "Part-time").trim();
+  const equity_offered = String(formData.get("equity_offered") ?? "").trim() || null;
+  const skills_required_str = String(formData.get("skills_required") ?? "").trim();
+
+  if (!startup_id || !title) {
+    redirect("/dashboard/startup?error=Startup ID and Role Title are required");
+  }
+
+  const skills_required = skills_required_str
+    ? skills_required_str
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+
+  // ✅ Verify the authenticated user owns this startup
+  const { data: startup, error: ownerError } = await supabase
+    .from("startups")
+    .select("founder_id")
+    .eq("id", startup_id)
+    .single();
+
+  if (ownerError || !startup || startup.founder_id !== user.id) {
+    redirect("/dashboard/startup?error=Unauthorized: You do not own this startup");
+  }
+
+  const { error } = await supabase.from("startup_roles").insert({
+    startup_id,
+    title,
+    commitment,
+    equity_offered,
+    skills_required,
+  });
+
+  if (error) {
+    redirect(`/dashboard/startup?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/dashboard/startup");
+  revalidatePath("/startups");
+  redirect("/dashboard/startup");
+}
+
+// ✅ SECURITY FIX: verify caller owns the parent startup before deleting a role
+export async function deleteStartupRole(roleId: string) {
+  const { supabase, user } = await requireUser();
+
+  // Fetch the role and join to the startup to verify ownership
+  const { data: role, error: fetchError } = await supabase
+    .from("startup_roles")
+    .select("startup_id, startups(founder_id)")
+    .eq("id", roleId)
+    .single();
+
+  if (fetchError || !role) throw new Error("Role not found");
+
+  const startup = Array.isArray(role.startups) ? role.startups[0] : role.startups;
+  if (!startup || (startup as { founder_id: string }).founder_id !== user.id) {
+    throw new Error("Unauthorized: You do not own this startup");
+  }
+
+  const { error } = await supabase.from("startup_roles").delete().eq("id", roleId);
+
+  if (error) throw new Error("Failed to delete role: " + error.message);
+
+  revalidatePath("/dashboard/startup");
+  revalidatePath("/startups");
+}
+
+export async function applyToRole(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const role_id = String(formData.get("role_id") ?? "");
+  const message = String(formData.get("message") ?? "").trim();
+  const redirect_slug = String(formData.get("redirect_slug") ?? "");
+
+  if (!role_id || !message) {
+    redirect(`/startups/${redirect_slug}?error=Message and Role are required`);
+  }
+
+  const { error } = await supabase.from("startup_applications").insert({
+    role_id,
+    applicant_id: user.id,
+    message,
+    status: "pending",
+  });
+
+  if (error) {
+    redirect(`/startups/${redirect_slug}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath(`/startups/${redirect_slug}`);
+  redirect(`/startups/${redirect_slug}?success=true`);
+}
+
+// ✅ SECURITY FIX: verify caller is the founder of the startup before updating application status
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: "accepted" | "rejected"
+) {
+  const { supabase, user } = await requireUser();
+
+  // Join through to verify the caller owns the startup this application is for
+  const { data: application, error: fetchError } = await supabase
+    .from("startup_applications")
+    .select("id, startup_roles(startup_id, startups(founder_id))")
+    .eq("id", applicationId)
+    .single();
+
+  if (fetchError || !application) throw new Error("Application not found");
+
+  const roleRaw = Array.isArray(application.startup_roles)
+    ? application.startup_roles[0]
+    : application.startup_roles;
+  const startupRaw =
+    roleRaw &&
+    (Array.isArray(roleRaw.startups) ? roleRaw.startups[0] : roleRaw.startups);
+
+  if (!startupRaw || (startupRaw as { founder_id: string }).founder_id !== user.id) {
+    throw new Error("Unauthorized: You do not own this startup");
+  }
+
+  const { error } = await supabase
+    .from("startup_applications")
+    .update({ status })
+    .eq("id", applicationId);
+
+  if (error) throw new Error("Failed to update application status: " + error.message);
+
+  revalidatePath("/dashboard/startup");
+}

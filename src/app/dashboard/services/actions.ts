@@ -1,0 +1,214 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import type { OrderStatus } from "@/lib/types";
+
+async function requireUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  return { supabase, user };
+}
+
+export async function createService(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const category = String(formData.get("category") ?? "Web Development").trim();
+  const price_inr = Number(formData.get("price_inr") ?? 0);
+  const delivery_days = Number(formData.get("delivery_days") ?? 1);
+
+  if (!title) {
+    redirect("/dashboard/services/new?error=Title is required");
+  }
+  if (price_inr <= 0) {
+    redirect("/dashboard/services/new?error=Price must be greater than 0");
+  }
+  if (delivery_days <= 0) {
+    redirect("/dashboard/services/new?error=Delivery days must be greater than 0");
+  }
+
+  const { error } = await supabase.from("services").insert({
+    owner_id: user.id,
+    title,
+    description,
+    category,
+    price_inr,
+    delivery_days,
+    is_active: true,
+  });
+
+  if (error) {
+    redirect(`/dashboard/services/new?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/dashboard/services");
+  redirect("/dashboard/services");
+}
+
+export async function updateService(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const id = String(formData.get("id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const category = String(formData.get("category") ?? "Web Development").trim();
+  const price_inr = Number(formData.get("price_inr") ?? 0);
+  const delivery_days = Number(formData.get("delivery_days") ?? 1);
+
+  if (!id) {
+    redirect("/dashboard/services?error=Service ID is missing");
+  }
+  if (!title) {
+    redirect(`/dashboard/services/${id}/edit?error=Title is required`);
+  }
+  if (price_inr <= 0) {
+    redirect(`/dashboard/services/${id}/edit?error=Price must be greater than 0`);
+  }
+  if (delivery_days <= 0) {
+    redirect(`/dashboard/services/${id}/edit?error=Delivery days must be greater than 0`);
+  }
+
+  const { error } = await supabase
+    .from("services")
+    .update({
+      title,
+      description,
+      category,
+      price_inr,
+      delivery_days,
+    })
+    .eq("id", id)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    redirect(`/dashboard/services/${id}/edit?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/dashboard/services");
+  redirect("/dashboard/services");
+}
+
+export async function toggleServiceActive(serviceId: string, currentActive: boolean) {
+  const { supabase, user } = await requireUser();
+
+  const { error } = await supabase
+    .from("services")
+    .update({ is_active: !currentActive })
+    .eq("id", serviceId)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    console.error("Error toggling service active:", error);
+    throw new Error("Failed to update service status");
+  }
+
+  revalidatePath("/dashboard/services");
+}
+
+export async function deleteService(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  const { error } = await supabase
+    .from("services")
+    .delete()
+    .eq("id", id)
+    .eq("owner_id", user.id);
+
+  if (error) {
+    console.error("Error deleting service:", error);
+    throw new Error("Failed to delete service");
+  }
+
+  revalidatePath("/dashboard/services");
+}
+
+// ✅ SECURITY FIX: fetch authoritative price and seller from DB — never trust caller-supplied values
+export async function createOrder(serviceId: string) {
+  const { supabase, user } = await requireUser();
+
+  // Fetch the service's authoritative price and owner from the database
+  const { data: service, error: fetchError } = await supabase
+    .from("services")
+    .select("price_inr, owner_id, is_active")
+    .eq("id", serviceId)
+    .single();
+
+  if (fetchError || !service) throw new Error("Service not found");
+  if (!service.is_active) throw new Error("This service is not currently available");
+  if (service.owner_id === user.id) throw new Error("You cannot purchase your own service.");
+
+  const { error } = await supabase.from("orders").insert({
+    service_id: serviceId,
+    buyer_id: user.id,
+    seller_id: service.owner_id,   // from DB, not caller
+    status: "requested",
+    price_inr: service.price_inr,  // from DB, not caller
+  });
+
+  if (error) {
+    console.error("Error creating order:", error);
+    throw new Error("Failed to place order: " + error.message);
+  }
+
+  revalidatePath("/dashboard/services");
+  revalidatePath(`/services/${serviceId}`);
+  redirect("/dashboard/services?tab=buyer");
+}
+
+export async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {
+  const { supabase, user } = await requireUser();
+
+  // Fetch order to verify participation
+  const { data: order, error: fetchError } = await supabase
+    .from("orders")
+    .select("buyer_id, seller_id")
+    .eq("id", orderId)
+    .single();
+
+  if (fetchError || !order) {
+    throw new Error("Order not found");
+  }
+
+  const isBuyer = order.buyer_id === user.id;
+  const isSeller = order.seller_id === user.id;
+
+  if (!isBuyer && !isSeller) {
+    throw new Error("Unauthorized to update this order");
+  }
+
+  // Validate state transitions
+  if (newStatus === "accepted" && !isSeller) {
+    throw new Error("Only the seller can accept the order");
+  }
+  if (newStatus === "in_progress" && !isSeller) {
+    throw new Error("Only the seller can mark order in progress");
+  }
+  if (newStatus === "delivered" && !isSeller) {
+    throw new Error("Only the seller can deliver the order");
+  }
+  if (newStatus === "completed" && !isBuyer) {
+    throw new Error("Only the buyer can complete the order");
+  }
+  if (newStatus === "disputed" && !isBuyer) {
+    throw new Error("Only the buyer can dispute the order");
+  }
+
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({ status: newStatus })
+    .eq("id", orderId);
+
+  if (updateError) {
+    console.error("Error updating order status:", updateError);
+    throw new Error("Failed to update order status");
+  }
+
+  revalidatePath("/dashboard/services");
+}

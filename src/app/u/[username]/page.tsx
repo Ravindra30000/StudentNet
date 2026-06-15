@@ -1,0 +1,325 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import type { Project, Skill, Service } from "@/lib/types";
+import ProjectCard from "@/components/profile/project-card";
+import { startConversation } from "@/app/dashboard/messages/actions";
+
+
+const ROLE_LABELS: Record<string, string> = {
+  student: "Student",
+  founder: "Startup Founder",
+  community_leader: "Community Leader",
+  client: "Client",
+};
+
+
+
+export default async function ProfilePage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = await params;
+  const supabase = await createClient();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (!profile) {
+    notFound();
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const showMessageButton = !user || user.id !== profile.id;
+
+  const handleMessageAction = async () => {
+    "use server";
+    await startConversation(profile.id);
+  };
+
+  const [{ data: skillLinks }, { data: projects }, { data: services }] = await Promise.all([
+    supabase
+      .from("profile_skills")
+      .select("skills(id, name, category)")
+      .eq("profile_id", profile.id),
+    supabase
+      .from("projects")
+      .select("*")
+      .eq("owner_id", profile.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("services")
+      .select("*")
+      .eq("owner_id", profile.id)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const skills: Skill[] = (skillLinks ?? [])
+    .map((row) => row.skills as unknown as Skill)
+    .filter(Boolean);
+
+
+
+  const charSum = profile.full_name.split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+  const gradients = [
+    "from-emerald-400 to-teal-600",
+    "from-amber-400 to-orange-500",
+    "from-rose-400 to-red-600",
+    "from-sky-400 to-blue-600",
+    "from-violet-400 to-purple-600",
+  ];
+  const gradient = gradients[charSum % gradients.length];
+  const initials = profile.full_name
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-6 py-20">
+      {/* Header */}
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-border/40 pb-8">
+        <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+          {/* Avatar Container */}
+          <div className="relative w-28 h-28 shrink-0">
+            {profile.avatar_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={profile.avatar_url}
+                alt={`${profile.full_name} profile picture`}
+                className="w-full h-full rounded-full object-cover border border-border/40 shadow-sm"
+              />
+            ) : (
+              <div className={`w-full h-full rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-heading font-extrabold text-3xl shadow-sm`}>
+                {initials}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-accent-green uppercase tracking-wider">
+              {ROLE_LABELS[profile.role] ?? profile.role}
+            </p>
+            <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-ink">
+              {profile.full_name}
+            </h1>
+            <p className="mt-2 text-base text-muted">
+              {profile.profession && profile.company
+                ? `${profile.profession} at ${profile.company}`
+                : profile.profession || profile.company
+                ? profile.profession || profile.company
+                : [profile.branch, profile.college].filter(Boolean).join(" · ")}
+              {!profile.company && !profile.profession && profile.graduation_year
+                ? ` · Class of ${profile.graduation_year}`
+                : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap justify-center items-center gap-3 mt-4 md:mt-0">
+          {showMessageButton && (
+            <form action={handleMessageAction}>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-green transition-all duration-200 shadow-sm cursor-pointer"
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>Message</span>
+              </button>
+            </form>
+          )}
+          {profile.github_url && (
+            <SocialLink href={profile.github_url} label="GitHub" />
+          )}
+          {profile.linkedin_url && (
+            <SocialLink href={profile.linkedin_url} label="LinkedIn" />
+          )}
+          {profile.portfolio_url && (
+            <SocialLink href={profile.portfolio_url} label="Website" />
+          )}
+        </div>
+      </div>
+
+      {/* Bio */}
+      {profile.bio && (
+        <p className="mt-10 max-w-2xl text-lg leading-relaxed text-muted">
+          {profile.bio}
+        </p>
+      )}
+
+      {/* Skills */}
+      {skills.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-sm font-medium text-muted">Skills</h2>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {skills.map((skill) => (
+              <span
+                key={skill.id}
+                className="rounded-full border border-border px-4 py-2 text-sm"
+              >
+                {skill.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Freelance Services */}
+      {services && services.length > 0 && (
+        <div className="mt-16">
+          <h2 className="text-sm font-medium text-muted">Freelance Offerings</h2>
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {services.map((service: Service) => (
+              <article key={service.id} className="glass-card p-6 flex flex-col gap-4 bg-surface rounded-xl border border-border/40 shadow-sm relative hover:shadow-card-hover transition-all duration-300">
+                <div className="flex justify-between items-start">
+                  <span className="font-label-sm text-xs font-semibold px-3 py-1 rounded-full bg-accent-green/10 text-accent-green uppercase tracking-wider">
+                    {service.category}
+                  </span>
+                  <span className="text-ink font-bold text-base">₹{service.price_inr.toLocaleString()}</span>
+                </div>
+                <div>
+                  <h4 className="font-heading text-base font-bold text-ink leading-tight mb-2">
+                    {service.title}
+                  </h4>
+                  <p className="font-sans text-xs text-muted line-clamp-2">
+                    {service.description || "No description provided."}
+                  </p>
+                </div>
+                <div className="mt-auto pt-2 flex items-center justify-between">
+                  <span className="text-xs text-muted">Delivery in {service.delivery_days} days</span>
+                  <Link
+                    href={`/services/${service.id}`}
+                    className="rounded-full bg-ink px-4 py-2 text-xs font-semibold text-white hover:opacity-90 transition-opacity"
+                  >
+                    View Service
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Projects */}
+      <div className="mt-16">
+        <h2 className="text-sm font-medium text-muted">Projects</h2>
+        {projects && projects.length > 0 ? (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {projects.map((project: Project) => (
+              <ProjectCard
+                key={project.id}
+                title={project.title}
+                description={project.description}
+                techStack={project.tech_stack}
+                coverImageUrl={project.cover_image_url}
+                projectImages={project.project_images}
+                videoUrl={project.video_url}
+                demoUrl={project.demo_url}
+                githubUrl={project.github_url}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 text-muted">No projects yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GithubIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="24"
+      height="24"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+    </svg>
+  );
+}
+
+function LinkedinIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="24"
+      height="24"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect x="2" y="9" width="4" height="12" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  );
+}
+
+function GlobeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="24"
+      height="24"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
+
+function SocialLink({ href, label }: { href: string; label: string }) {
+  const Icon = label === "GitHub" 
+    ? GithubIcon 
+    : label === "LinkedIn" 
+    ? LinkedinIcon 
+    : GlobeIcon;
+
+  return (
+    <Link
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium transition-all hover:bg-surface-sunken text-ink bg-surface shadow-sm"
+    >
+      <Icon className="h-4 w-4 text-muted" />
+      <span>{label}</span>
+    </Link>
+  );
+}
+
+

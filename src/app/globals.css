@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --background: #EFEFED;
+  --surface: #FFFFFF;
+  --surface-sunken: #F5F5F3;
+  --ink: #14151A;
+  --muted: #6B7280;
+  --border: #E6E6E3;
+  --accent-green: #163832;
+  --accent-green-foreground: #FFFFFF;
+  --accent-gold: #F5B83D;
+  --accent-gold-foreground: #14151A;
+  --success: #1F9D55;
+  --danger: #E0533D;
+
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent-green: var(--accent-green);
+  --color-accent-green-foreground: var(--accent-green-foreground);
+  --color-accent-gold: var(--accent-gold);
+  --color-accent-gold-foreground: var(--accent-gold-foreground);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-jakarta);
+
+  --shadow-card: 0 2px 12px rgba(20, 21, 26, 0.04), 0 1px 2px rgba(20, 21, 26, 0.03);
+  --shadow-card-hover: 0 8px 24px rgba(20, 21, 26, 0.08);
+  --shadow-pop: 0 16px 40px rgba(20, 21, 26, 0.12);
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-inter), sans-serif;
+}
