@@ -82,7 +82,7 @@ export default function NavbarMobile({
 
       {/* Premium High-Contrast Drawer Overlay Menu */}
       {isOpen && (
-        <div className="fixed inset-x-0 top-[77px] bottom-0 z-50 flex flex-col bg-accent-green border-t border-white/10 animate-in fade-in slide-in-from-top-4 duration-200">
+        <div className="absolute inset-x-0 top-full h-[calc(100vh-100%)] z-50 flex flex-col bg-accent-green border-t border-white/10 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
           <div className="flex-1 overflow-y-auto p-6 space-y-7 pb-12">
             
             {/* User Profile Card (Frosted Glass Style) */}
