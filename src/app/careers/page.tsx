@@ -1,30 +1,7 @@
-import Link from "next/link";
 import Footer from "@/components/layout/footer";
 
 export default function CareersPage() {
-  const jobs = [
-    {
-      title: "Founding Fullstack Engineer",
-      team: "Engineering",
-      location: "Bengaluru, IN (Hybrid)",
-      type: "Full-time",
-      description: "Help build and scale the Next.js and Supabase architecture supporting hundreds of thousands of users.",
-    },
-    {
-      title: "Community Growth Lead",
-      team: "Operations",
-      location: "Remote",
-      type: "Full-time / Part-time",
-      description: "Manage university relationships, student chapters, and coordinate hackathons across top engineering campuses.",
-    },
-    {
-      title: "Developer Advocate Internship",
-      team: "Developer Relations",
-      location: "Remote",
-      type: "Internship (6 Months)",
-      description: "Create educational content, highlight featured builders, and build community relationships on GitHub and Discord.",
-    },
-  ];
+  const supportEmail = "ravindratomar300@gmail.com";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -67,43 +44,25 @@ export default function CareersPage() {
         </div>
       </section>
 
-      {/* Job Openings */}
-      <section className="bg-surface-sunken py-20 px-6 lg:px-8 border-t border-b border-border">
-        <div className="max-w-4xl mx-auto w-full">
-          <h2 className="text-3xl font-extrabold tracking-tight font-heading mb-4 text-center">
-            Open Roles
+      {/* Open Applications Section */}
+      <section className="bg-surface-sunken py-20 px-6 lg:px-8 border-t border-b border-border text-center">
+        <div className="max-w-2xl mx-auto w-full space-y-6">
+          <h2 className="text-3xl font-extrabold tracking-tight font-heading text-ink">
+            Open Applications
           </h2>
-          <p className="text-muted text-center mb-12 text-sm max-w-md mx-auto">
-            Find a position that fits your talent. We review every single application with extreme care.
+          <p className="text-muted text-sm leading-relaxed max-w-md mx-auto">
+            We are not actively hiring for any open roles at this moment, but we are always looking for passionate, self-driven builders to join our circle.
           </p>
-
-          <div className="space-y-6">
-            {jobs.map((job, idx) => (
-              <div
-                key={idx}
-                className="bg-surface p-6 rounded-lg shadow-card hover:shadow-card-hover transition-shadow border border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-              >
-                <div>
-                  <div className="flex gap-2 mb-2">
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-accent-green/10 text-accent-green">
-                      {job.team}
-                    </span>
-                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-muted/10 text-muted">
-                      {job.type}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-ink mb-1">{job.title}</h3>
-                  <p className="text-xs text-muted mb-3">{job.location}</p>
-                  <p className="text-sm text-muted max-w-xl leading-relaxed">{job.description}</p>
-                </div>
-                <Link
-                  href="/contact?subject=Careers"
-                  className="inline-flex h-9 items-center justify-center rounded-md bg-accent-green px-4 text-xs font-semibold text-accent-green-foreground transition-colors hover:bg-accent-green/90 shrink-0"
-                >
-                  Apply Now
-                </Link>
-              </div>
-            ))}
+          <div className="bg-surface p-8 rounded-lg border border-border max-w-lg mx-auto space-y-4">
+            <p className="text-sm text-muted">
+              If you want to contribute to engineering, design, developer relations, or community management, send us your portfolio and tell us how you want to build StudentNet together.
+            </p>
+            <a
+              href={`mailto:${supportEmail}?subject=Open%20Application%20-%20StudentNet`}
+              className="inline-flex h-10 items-center justify-center rounded-md bg-accent-green px-6 text-sm font-semibold text-accent-green-foreground transition-colors hover:bg-accent-green/90"
+            >
+              Send Open Application
+            </a>
           </div>
         </div>
       </section>
