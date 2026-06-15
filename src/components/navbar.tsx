@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import NavbarUserMenu from "@/components/navbar-user-menu";
 import Logo from "@/components/logo";
 import NavbarMobile from "@/components/navbar-mobile";
+import NavbarNotifications from "@/components/navbar-notifications";
 
 export default async function Navbar() {
   const supabase = await createClient();
@@ -60,11 +61,14 @@ export default async function Navbar() {
             Events
           </Link>
           {user ? (
-            <NavbarUserMenu
-              username={username}
-              fullName={fullName}
-              avatarUrl={avatarUrl}
-            />
+            <div className="flex items-center gap-4">
+              <NavbarNotifications userId={user.id} />
+              <NavbarUserMenu
+                username={username}
+                fullName={fullName}
+                avatarUrl={avatarUrl}
+              />
+            </div>
           ) : (
             <>
               <Link
@@ -82,12 +86,15 @@ export default async function Navbar() {
             </>
           )}
         </div>
-        <NavbarMobile
-          user={user}
-          username={username}
-          fullName={fullName}
-          avatarUrl={avatarUrl}
-        />
+        <div className="flex items-center gap-3 md:hidden">
+          {user && <NavbarNotifications userId={user.id} />}
+          <NavbarMobile
+            user={user}
+            username={username}
+            fullName={fullName}
+            avatarUrl={avatarUrl}
+          />
+        </div>
       </nav>
     </header>
   );

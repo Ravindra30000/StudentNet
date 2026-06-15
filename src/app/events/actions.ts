@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { notifyAllUsers } from "@/lib/notifications";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -62,6 +63,32 @@ export async function createEvent(formData: FormData) {
 
   if (error) {
     redirect(`/dashboard/communities?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // Notify all users about the scheduled event (excluding creator)
+  try {
+    let communityName = "";
+    if (communityId) {
+      const { data: comm } = await supabase
+        .from("communities")
+        .select("name")
+        .eq("id", communityId)
+        .maybeSingle();
+      if (comm) communityName = ` for ${comm.name}`;
+    }
+
+    await notifyAllUsers(
+      supabase,
+      "event",
+      {
+        title: "New Event Scheduled",
+        message: `The event '${title}' has been scheduled${communityName}!`,
+        link: `/events/${slug}`,
+      },
+      user.id
+    );
+  } catch (notifErr) {
+    console.error("Error creating event notification:", notifErr);
   }
 
   revalidatePath("/events");

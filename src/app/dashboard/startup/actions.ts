@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createNotification, notifyAllUsers } from "@/lib/notifications";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -43,6 +44,22 @@ export async function createStartup(formData: FormData) {
 
   if (error) {
     redirect(`/dashboard/startup?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // Notify all users about the new startup launch (excluding founder)
+  try {
+    await notifyAllUsers(
+      supabase,
+      "startup",
+      {
+        title: "New Startup Launched!",
+        message: `${name} has just launched in the ${industry} space! Check out their idea.`,
+        link: `/startups/${slug}`,
+      },
+      user.id
+    );
+  } catch (notifErr) {
+    console.error("Error creating startup launch notification:", notifErr);
   }
 
   revalidatePath("/dashboard/startup");
@@ -172,6 +189,50 @@ export async function applyToRole(formData: FormData) {
     redirect(`/startups/${redirect_slug}?error=${encodeURIComponent(error.message)}`);
   }
 
+  // Notify startup founder about new role application
+  try {
+    const { data: roleData } = await supabase
+      .from("startup_roles")
+      .select("title, startups(name, founder_id)")
+      .eq("id", role_id)
+      .maybeSingle();
+
+    if (roleData) {
+      const roleRaw = roleData as unknown as {
+        title: string;
+        startups: { name: string; founder_id: string } | { name: string; founder_id: string }[] | null;
+      };
+      const startupRaw = Array.isArray(roleRaw.startups) ? roleRaw.startups[0] : roleRaw.startups;
+      const founderId = startupRaw?.founder_id;
+      const startupName = startupRaw?.name || "their startup";
+      const roleTitle = roleRaw.title;
+
+      // Get applicant full name
+      const { data: applicantProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const applicantName = applicantProfile?.full_name || "A student";
+
+      if (founderId) {
+        await createNotification(
+          supabase,
+          founderId,
+          "application",
+          {
+            title: "New Role Application",
+            message: `${applicantName} has applied for the '${roleTitle}' role at '${startupName}'.`,
+            link: "/dashboard/startup",
+          }
+        );
+      }
+    }
+  } catch (notifErr) {
+    console.error("Error creating role application notification:", notifErr);
+  }
+
   revalidatePath(`/startups/${redirect_slug}`);
   redirect(`/startups/${redirect_slug}?success=true`);
 }
@@ -186,7 +247,7 @@ export async function updateApplicationStatus(
   // Join through to verify the caller owns the startup this application is for
   const { data: application, error: fetchError } = await supabase
     .from("startup_applications")
-    .select("id, startup_roles(startup_id, startups(founder_id))")
+    .select("id, applicant_id, startup_roles(title, startup_id, startups(name, founder_id))")
     .eq("id", applicationId)
     .single();
 
@@ -209,6 +270,32 @@ export async function updateApplicationStatus(
     .eq("id", applicationId);
 
   if (error) throw new Error("Failed to update application status: " + error.message);
+
+  // Notify the applicant of the status change
+  try {
+    const roleRaw = Array.isArray(application.startup_roles)
+      ? application.startup_roles[0]
+      : application.startup_roles;
+    const startupRaw =
+      roleRaw &&
+      (Array.isArray(roleRaw.startups) ? roleRaw.startups[0] : roleRaw.startups);
+    
+    const roleTitle = roleRaw?.title || "Role";
+    const startupName = startupRaw?.name || "Startup";
+
+    await createNotification(
+      supabase,
+      application.applicant_id,
+      "application",
+      {
+        title: `Application ${status === "accepted" ? "Accepted" : "Rejected"}`,
+        message: `Your application to '${roleTitle}' at '${startupName}' has been ${status}.`,
+        link: "/dashboard/startup",
+      }
+    );
+  } catch (notifErr) {
+    console.error("Error creating application status update notification:", notifErr);
+  }
 
   revalidatePath("/dashboard/startup");
 }
