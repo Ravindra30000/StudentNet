@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { markAsRead } from "@/app/dashboard/messages/actions";
 
@@ -170,6 +172,14 @@ export default function MessageThread({
       {/* Header */}
       <div className="h-16 px-6 flex items-center border-b border-border shrink-0 bg-surface">
         <div className="flex items-center gap-3 min-w-0">
+          <Link
+            href="/dashboard/messages"
+            className="md:hidden flex items-center justify-center -ml-2 p-1.5 rounded-full text-muted hover:text-ink hover:bg-surface-sunken transition-all cursor-pointer mr-1"
+            aria-label="Back to conversations"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Link>
+
           <div className="relative shrink-0 w-10 h-10 rounded-full overflow-hidden">
             {recipient.avatar_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */

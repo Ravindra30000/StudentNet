@@ -171,15 +171,19 @@ export default async function MessagesPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-10 flex flex-col flex-1">
-      <div className="mb-6 flex justify-between items-baseline shrink-0">
+    <div className="mx-auto w-full max-w-6xl px-6 py-6 md:py-10 flex flex-col flex-1">
+      <div className={`mb-6 justify-between items-baseline shrink-0 ${activeId ? "hidden md:flex" : "flex"}`}>
         <h1 className="text-3xl font-bold tracking-tight text-ink font-heading">
           Inbox
         </h1>
       </div>
 
       {/* Main Card Shell */}
-      <div className="bg-surface rounded-xl border border-border/40 shadow-sm overflow-hidden flex flex-1 h-[calc(100vh-220px)] min-h-[500px]">
+      <div className={`bg-surface rounded-xl border border-border/40 shadow-sm overflow-hidden flex flex-1 ${
+        activeId 
+          ? "h-[calc(100vh-140px)] md:h-[calc(100vh-220px)] min-h-[450px] md:min-h-[500px]" 
+          : "h-[calc(100vh-200px)] md:h-[calc(100vh-220px)] min-h-[450px] md:min-h-[500px]"
+      }`}>
         {/* Left list pane */}
         <ConversationList
           conversations={conversationList}
@@ -187,7 +191,9 @@ export default async function MessagesPage({
         />
 
         {/* Right thread pane */}
-        <div className="flex-1 flex flex-col h-full bg-surface min-w-0">
+        <div className={`flex-1 flex flex-col h-full bg-surface min-w-0 ${
+          activeId ? "flex" : "hidden md:flex"
+        }`}>
           {activeId && activeRecipient ? (
             <>
               <MessageThread

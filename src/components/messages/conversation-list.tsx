@@ -64,7 +64,9 @@ export default function ConversationList({
   };
 
   return (
-    <div className="flex flex-col h-full bg-surface border-r border-border shrink-0 w-full md:w-[320px] lg:w-[380px]">
+    <div className={`flex flex-col h-full bg-surface border-r border-border shrink-0 w-full md:w-[320px] lg:w-[380px] ${
+      activeId ? "hidden md:flex" : "flex"
+    }`}>
       {/* Search Input */}
       <div className="p-4 border-b border-border">
         <div className="relative flex items-center">
