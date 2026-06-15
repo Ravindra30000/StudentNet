@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import NavbarUserMenu from "@/components/navbar-user-menu";
 import Logo from "@/components/logo";
+import NavbarMobile from "@/components/navbar-mobile";
 
 export default async function Navbar() {
   const supabase = await createClient();
@@ -33,7 +34,7 @@ export default async function Navbar() {
         >
           <Logo size="lg" />
         </Link>
-        <div className="flex items-center gap-6 md:gap-8">
+        <div className="hidden md:flex items-center gap-6 md:gap-8">
           <Link
             href="/students"
             className="text-sm font-medium text-muted hover:text-ink transition-colors"
@@ -81,6 +82,12 @@ export default async function Navbar() {
             </>
           )}
         </div>
+        <NavbarMobile
+          user={user}
+          username={username}
+          fullName={fullName}
+          avatarUrl={avatarUrl}
+        />
       </nav>
     </header>
   );
