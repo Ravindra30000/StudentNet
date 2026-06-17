@@ -7,9 +7,11 @@ import { deleteCommunity } from "@/app/dashboard/communities/actions";
 export default function DeleteCommunityButton({
   communityId,
   communityName,
+  compact = false,
 }: {
   communityId: string;
   communityName: string;
+  compact?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -24,6 +26,20 @@ export default function DeleteCommunityButton({
     const fd = new FormData();
     fd.set("community_id", communityId);
     startTransition(() => deleteCommunity(fd));
+  }
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isPending}
+        title={isPending ? "Deleting…" : "Delete Community"}
+        className="flex items-center justify-center rounded-full border border-danger/40 bg-danger/10 p-2 text-danger hover:bg-danger/20 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <Trash2 size={14} />
+      </button>
+    );
   }
 
   return (

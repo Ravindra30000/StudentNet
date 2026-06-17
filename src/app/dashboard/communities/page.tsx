@@ -13,6 +13,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import type { Community } from "@/lib/types";
+import DeleteCommunityButton from "@/components/ui/delete-community-button";
 
 interface JoinedMembership {
   community_id: string;
@@ -102,18 +103,25 @@ export default async function DashboardCommunitiesPage({
             ) : (
               <div className="divide-y divide-border/30">
                 {led.map((comm) => (
-                  <div key={comm.id} className="flex items-center justify-between py-4">
-                    <div>
+                  <div key={comm.id} className="flex items-center justify-between gap-4 py-4">
+                    <div className="min-w-0">
                       <h4 className="text-sm font-bold text-ink">{comm.name}</h4>
                       <p className="text-xs text-muted mt-1 line-clamp-1">{comm.description}</p>
                     </div>
-                    <Link
-                      href={`/communities/${comm.slug}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-accent-green hover:underline"
-                    >
-                      Dashboard
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Link
+                        href={`/communities/${comm.slug}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-accent-green hover:underline"
+                      >
+                        Dashboard
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </Link>
+                      <DeleteCommunityButton
+                        communityId={comm.id}
+                        communityName={comm.name}
+                        compact
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
