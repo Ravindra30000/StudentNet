@@ -221,6 +221,27 @@ export default async function CommunityHomePage({
           </div>
         )}
 
+        {/* Danger Zone — leader only, shown above the grid so it's visible on all screen sizes */}
+        {isLeader && (
+          <div className="mt-6 rounded-3xl border-2 border-danger/30 bg-danger/5 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-danger text-base">&#9888;</span>
+                <h3 className="font-heading text-sm font-bold text-danger">Danger Zone</h3>
+              </div>
+              <p className="text-xs text-muted leading-relaxed">
+                Permanently dissolve this community. All posts and members will be removed. This cannot be undone.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <DeleteCommunityButton
+                communityId={community.id}
+                communityName={community.name}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Main Columns */}
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Left / Feed Column (8 cols) */}
@@ -321,23 +342,6 @@ export default async function CommunityHomePage({
                 <p className="text-muted mt-4 text-xs italic">No description provided yet.</p>
               )}
             </div>
-
-            {/* Danger Zone — leader only */}
-            {isLeader && (
-              <div className="rounded-3xl border-2 border-danger/30 bg-danger/5 p-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-danger text-base">&#9888;</span>
-                  <h3 className="font-heading text-sm font-bold text-danger">Danger Zone</h3>
-                </div>
-                <p className="text-xs text-muted leading-relaxed mb-4">
-                  Permanently dissolve this community. All posts and members will be removed. This cannot be undone.
-                </p>
-                <DeleteCommunityButton
-                  communityId={community.id}
-                  communityName={community.name}
-                />
-              </div>
-            )}
 
             {/* Upcoming Events list */}
             {events.length > 0 && (

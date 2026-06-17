@@ -7,9 +7,11 @@ import { deleteStartup } from "@/app/dashboard/startup/actions";
 export default function DeleteStartupButton({
   startupId,
   startupName,
+  compact = false,
 }: {
   startupId: string;
   startupName: string;
+  compact?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -24,6 +26,20 @@ export default function DeleteStartupButton({
     const fd = new FormData();
     fd.set("startup_id", startupId);
     startTransition(() => deleteStartup(fd));
+  }
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={isPending}
+        title={isPending ? "Deleting…" : "Delete Startup"}
+        className="flex items-center justify-center rounded-full border border-danger/40 bg-danger/10 p-2.5 text-danger hover:bg-danger/20 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        <Trash2 size={16} />
+      </button>
+    );
   }
 
   return (

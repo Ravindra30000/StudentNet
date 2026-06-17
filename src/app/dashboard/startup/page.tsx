@@ -100,12 +100,15 @@ export default async function StartupDashboardPage({
           </p>
         </div>
         {startup && (
-          <Link
-            href={`/startups/${startup.slug}`}
-            className="w-fit rounded-full border border-border bg-surface px-5 py-2.5 font-semibold text-sm text-ink hover:bg-surface-sunken flex items-center gap-2 transition-all duration-200"
-          >
-            <Eye size={16} /> View public page
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/startups/${startup.slug}`}
+              className="w-fit rounded-full border border-border bg-surface px-5 py-2.5 font-semibold text-sm text-ink hover:bg-surface-sunken flex items-center gap-2 transition-all duration-200"
+            >
+              <Eye size={16} /> View public page
+            </Link>
+            <DeleteStartupButton startupId={startup.id} startupName={startup.name} compact />
+          </div>
         )}
       </div>
 
