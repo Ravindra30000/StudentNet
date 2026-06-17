@@ -223,13 +223,13 @@ export default async function CommunityHomePage({
 
         {/* Danger Zone — leader only, shown above the grid so it's visible on all screen sizes */}
         {isLeader && (
-          <div className="mt-6 rounded-2xl border-2 border-red-500 bg-red-50 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="mt-6 rounded-2xl border-2 border-danger bg-danger/10 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-red-600 text-base">&#9888;</span>
-                <h3 className="font-heading text-sm font-bold text-red-600">Delete Community</h3>
+                <span className="text-danger text-base">&#9888;</span>
+                <h3 className="font-heading text-sm font-bold text-danger">Delete Community</h3>
               </div>
-              <p className="text-xs text-red-700/70 leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 Permanently dissolve this community. All posts and members will be removed. This cannot be undone.
               </p>
             </div>
