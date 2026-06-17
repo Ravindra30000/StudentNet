@@ -299,3 +299,75 @@ export async function updateApplicationStatus(
 
   revalidatePath("/dashboard/startup");
 }
+
+export async function deleteStartup(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const startupId = String(formData.get("startup_id") ?? "");
+
+  if (!startupId) redirect("/dashboard/startup?error=Invalid startup ID");
+
+  // Verify ownership and get startup name
+  const { data: startup, error: fetchError } = await supabase
+    .from("startups")
+    .select("id, name, slug, founder_id")
+    .eq("id", startupId)
+    .maybeSingle();
+
+  if (fetchError || !startup) redirect("/dashboard/startup?error=Startup not found");
+  if (startup.founder_id !== user.id) redirect("/dashboard/startup?error=Unauthorized");
+
+  // Notify all applicants (pending + accepted) before deletion
+  try {
+    const { data: roles } = await supabase
+      .from("startup_roles")
+      .select("id")
+      .eq("startup_id", startupId);
+
+    if (roles && roles.length > 0) {
+      const roleIds = roles.map((r) => r.id);
+      const { data: applications } = await supabase
+        .from("startup_applications")
+        .select("applicant_id, status, startup_roles(title)")
+        .in("role_id", roleIds)
+        .in("status", ["pending", "accepted"]);
+
+      if (applications && applications.length > 0) {
+        const notifications = applications.map((app) => {
+          const roleRaw = Array.isArray(app.startup_roles)
+            ? app.startup_roles[0]
+            : app.startup_roles;
+          const roleTitle = (roleRaw as { title: string } | null)?.title ?? "a role";
+          const isAccepted = app.status === "accepted";
+          return {
+            profile_id: app.applicant_id,
+            type: "application",
+            payload: {
+              title: "Startup Dissolved",
+              message: isAccepted
+                ? `"${startup.name}" — where you were accepted for "${roleTitle}" — has been dissolved by the founder.`
+                : `"${startup.name}" — where you had a pending application for "${roleTitle}" — has been dissolved.`,
+            },
+          };
+        });
+        await supabase.from("notifications").insert(notifications);
+      }
+    }
+  } catch (notifErr) {
+    console.error("Error sending startup deletion notifications:", notifErr);
+  }
+
+  // Delete startup (cascade: startup_roles → startup_applications)
+  const { error: deleteError } = await supabase
+    .from("startups")
+    .delete()
+    .eq("id", startupId)
+    .eq("founder_id", user.id);
+
+  if (deleteError) {
+    redirect(`/dashboard/startup?error=${encodeURIComponent(deleteError.message)}`);
+  }
+
+  revalidatePath("/dashboard/startup");
+  revalidatePath("/startups");
+  redirect("/dashboard/startup");
+}

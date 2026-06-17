@@ -5,6 +5,7 @@ import {
   joinCommunity,
   leaveCommunity,
   createCommunityPost,
+  deleteCommunity,
 } from "@/app/dashboard/communities/actions";
 import { revalidatePath } from "next/cache";
 import {
@@ -15,8 +16,10 @@ import {
   Send,
   Shield,
   Check,
+  Trash2,
 } from "lucide-react";
 import type { CommunityPost, CommunityMember, Profile, Event } from "@/lib/types";
+import DeleteConfirmButton from "@/components/ui/delete-confirm-button";
 
 interface PostWithAuthor extends Omit<CommunityPost, 'author_id' | 'author'> {
   author_id: string;
@@ -317,6 +320,30 @@ export default async function CommunityHomePage({
                 <p className="text-muted mt-4 text-xs italic">No description provided yet.</p>
               )}
             </div>
+
+            {/* Danger Zone — leader only */}
+            {isLeader && (
+              <div className="rounded-3xl border border-danger/25 bg-danger/5 p-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trash2 className="h-4 w-4 text-danger" />
+                  <h3 className="font-heading text-sm font-bold text-danger">Danger Zone</h3>
+                </div>
+                <p className="text-xs text-muted leading-relaxed mb-4">
+                  Permanently dissolve this community. All posts and members will be removed. This cannot be undone.
+                </p>
+                <DeleteConfirmButton
+                  formAction={async (fd) => {
+                    "use server";
+                    fd.set("community_id", community.id);
+                    await deleteCommunity(fd);
+                  }}
+                  confirmMessage={`Delete "${community.name}"? All posts and members will be permanently removed. This cannot be undone.`}
+                  className="w-full rounded-2xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-xs font-bold text-danger hover:bg-danger/20 transition-colors cursor-pointer text-center"
+                >
+                  Delete Community
+                </DeleteConfirmButton>
+              </div>
+            )}
 
             {/* Upcoming Events list */}
             {events.length > 0 && (

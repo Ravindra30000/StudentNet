@@ -1,5 +1,7 @@
 "use server";
 
+import { createNotification } from "@/lib/notifications";
+
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -146,4 +148,59 @@ export async function createCommunityPost(formData: FormData) {
 
   revalidatePath(`/communities/${slug}`);
   redirect(`/communities/${slug}`);
+}
+
+export async function deleteCommunity(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const communityId = String(formData.get("community_id") ?? "");
+
+  if (!communityId) redirect("/communities?error=Invalid community");
+
+  // Verify ownership
+  const { data: community, error: fetchError } = await supabase
+    .from("communities")
+    .select("id, name, leader_id")
+    .eq("id", communityId)
+    .maybeSingle();
+
+  if (fetchError || !community) redirect("/communities?error=Community not found");
+  if (community.leader_id !== user.id) redirect("/communities?error=Unauthorized");
+
+  // Notify all members (except the leader) before deletion
+  try {
+    const { data: members } = await supabase
+      .from("community_members")
+      .select("profile_id")
+      .eq("community_id", communityId)
+      .neq("profile_id", user.id);
+
+    if (members && members.length > 0) {
+      const notifications = members.map((m) => ({
+        profile_id: m.profile_id,
+        type: "system",
+        payload: {
+          title: "Community Dissolved",
+          message: `The community "${community.name}" has been dissolved by its leader.`,
+        },
+      }));
+      await supabase.from("notifications").insert(notifications);
+    }
+  } catch (notifErr) {
+    console.error("Error sending community deletion notifications:", notifErr);
+  }
+
+  // Delete community (cascade: members, posts, linked events → SET NULL)
+  const { error: deleteError } = await supabase
+    .from("communities")
+    .delete()
+    .eq("id", communityId)
+    .eq("leader_id", user.id);
+
+  if (deleteError) {
+    redirect(`/communities?error=${encodeURIComponent(deleteError.message)}`);
+  }
+
+  revalidatePath("/communities");
+  revalidatePath("/dashboard/communities");
+  redirect("/communities");
 }
