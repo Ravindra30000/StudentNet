@@ -19,7 +19,6 @@ import {
   Trash2,
 } from "lucide-react";
 import type { CommunityPost, CommunityMember, Profile, Event } from "@/lib/types";
-import DeleteConfirmButton from "@/components/ui/delete-confirm-button";
 
 interface PostWithAuthor extends Omit<CommunityPost, 'author_id' | 'author'> {
   author_id: string;
@@ -331,17 +330,15 @@ export default async function CommunityHomePage({
                 <p className="text-xs text-muted leading-relaxed mb-4">
                   Permanently dissolve this community. All posts and members will be removed. This cannot be undone.
                 </p>
-                <DeleteConfirmButton
-                  formAction={async (fd) => {
-                    "use server";
-                    fd.set("community_id", community.id);
-                    await deleteCommunity(fd);
-                  }}
-                  confirmMessage={`Delete "${community.name}"? All posts and members will be permanently removed. This cannot be undone.`}
-                  className="w-full rounded-2xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-xs font-bold text-danger hover:bg-danger/20 transition-colors cursor-pointer text-center"
-                >
-                  Delete Community
-                </DeleteConfirmButton>
+                <form action={async () => { "use server"; const fd = new FormData(); fd.set("community_id", community.id); await deleteCommunity(fd); }}>
+                  <button
+                    type="submit"
+                    onClick={(e) => { if (!confirm(`Delete "${community.name}"? All posts and members will be permanently removed. This cannot be undone.`)) e.preventDefault(); }}
+                    className="w-full rounded-2xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-xs font-bold text-danger hover:bg-danger/20 transition-colors cursor-pointer text-center"
+                  >
+                    Delete Community
+                  </button>
+                </form>
               </div>
             )}
 

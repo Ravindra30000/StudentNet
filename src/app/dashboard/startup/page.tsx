@@ -373,6 +373,28 @@ export default async function StartupDashboardPage({
                 </div>
               )}
             </section>
+
+            {/* Danger Zone — founder only */}
+            <section className="bg-danger/5 rounded-2xl border border-danger/25 p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-3">
+                <AlertTriangle className="text-danger shrink-0" size={20} />
+                <h3 className="font-heading text-base font-bold text-danger">Danger Zone</h3>
+              </div>
+              <p className="text-sm text-muted leading-relaxed mb-5">
+                Permanently delete{" "}
+                <span className="font-semibold text-ink">{startup.name}</span>{" "}
+                and all its open roles and applications. Accepted applicants will be notified. This action is irreversible.
+              </p>
+              <form action={async () => { "use server"; const fd = new FormData(); fd.set("startup_id", startup.id); await deleteStartup(fd); }}>
+                <button
+                  type="submit"
+                  onClick={(e) => { if (!confirm(`Delete "${startup.name}"? All roles and applications will be permanently removed. This cannot be undone.`)) e.preventDefault(); }}
+                  className="rounded-full border border-danger/40 bg-danger/10 px-5 py-2.5 text-sm font-bold text-danger hover:bg-danger/20 transition-colors cursor-pointer flex items-center gap-2"
+                >
+                  <Trash2 size={14} /> Delete Startup
+                </button>
+              </form>
+            </section>
           </div>
 
           {/* Right Panel: Applicants list */}
@@ -450,29 +472,7 @@ export default async function StartupDashboardPage({
               </div>
             )}
           </div>
-
-            {/* Danger Zone */}
-            <section className="bg-danger/5 rounded-2xl border border-danger/25 p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-4">
-                <AlertTriangle className="text-danger shrink-0" size={20} />
-                <h3 className="font-heading text-base font-bold text-danger">Danger Zone</h3>
-              </div>
-              <p className="text-sm text-muted leading-relaxed mb-5">
-                Permanently delete <span className="font-semibold text-ink">{startup.name}</span> and all its open roles and applications. Accepted applicants will be notified. This action is irreversible.
-              </p>
-              <DeleteConfirmButton
-                formAction={async (fd) => {
-                  "use server";
-                  fd.set("startup_id", startup.id);
-                  await deleteStartup(fd);
-                }}
-                confirmMessage={`Delete "${startup.name}"? All roles and applications will be permanently removed. This cannot be undone.`}
-                className="rounded-full border border-danger/40 bg-danger/10 px-5 py-2.5 text-sm font-bold text-danger hover:bg-danger/20 transition-colors cursor-pointer flex items-center gap-2"
-              >
-                <Trash2 size={14} /> Delete Startup
-              </DeleteConfirmButton>
-            </section>
-          </div>
+        </div>
       )}
     </div>
   );
