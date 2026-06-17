@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import {
   createTeam,
@@ -201,7 +202,7 @@ export default async function TeamDashboardPage({
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent-green text-surface font-heading text-2xl font-bold">
                   {team.avatar_url ? (
-                    <img src={team.avatar_url} alt={team.name} className="h-full w-full rounded-2xl object-cover" />
+                    <Image src={team.avatar_url} alt={team.name} width={64} height={64} className="h-full w-full rounded-2xl object-cover" />
                   ) : (
                     team.name.substring(0, 2).toUpperCase()
                   )}
@@ -337,9 +338,11 @@ export default async function TeamDashboardPage({
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken font-bold text-ink text-sm">
                         {mem.profile?.avatar_url ? (
-                          <img
+                          <Image
                             src={mem.profile.avatar_url}
                             alt={mem.profile.full_name}
+                            width={40}
+                            height={40}
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (

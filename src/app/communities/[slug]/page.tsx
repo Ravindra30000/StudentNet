@@ -1,11 +1,11 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import {
   joinCommunity,
   leaveCommunity,
   createCommunityPost,
-  deleteCommunity,
 } from "@/app/dashboard/communities/actions";
 import { revalidatePath } from "next/cache";
 import {
@@ -16,9 +16,9 @@ import {
   Send,
   Shield,
   Check,
-  Trash2,
 } from "lucide-react";
 import type { CommunityPost, CommunityMember, Profile, Event } from "@/lib/types";
+import DeleteCommunityButton from "@/components/ui/delete-community-button";
 
 interface PostWithAuthor extends Omit<CommunityPost, 'author_id' | 'author'> {
   author_id: string;
@@ -269,9 +269,11 @@ export default async function CommunityHomePage({
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunken font-bold text-ink text-sm hover:opacity-90 transition-opacity"
                       >
                         {post.author?.avatar_url ? (
-                          <img
+                          <Image
                             src={post.author.avatar_url}
                             alt={post.author.full_name}
+                            width={40}
+                            height={40}
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
@@ -322,23 +324,18 @@ export default async function CommunityHomePage({
 
             {/* Danger Zone — leader only */}
             {isLeader && (
-              <div className="rounded-3xl border border-danger/25 bg-danger/5 p-6">
+              <div className="rounded-3xl border-2 border-danger/30 bg-danger/5 p-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <Trash2 className="h-4 w-4 text-danger" />
+                  <span className="text-danger text-base">&#9888;</span>
                   <h3 className="font-heading text-sm font-bold text-danger">Danger Zone</h3>
                 </div>
                 <p className="text-xs text-muted leading-relaxed mb-4">
                   Permanently dissolve this community. All posts and members will be removed. This cannot be undone.
                 </p>
-                <form action={async () => { "use server"; const fd = new FormData(); fd.set("community_id", community.id); await deleteCommunity(fd); }}>
-                  <button
-                    type="submit"
-                    onClick={(e) => { if (!confirm(`Delete "${community.name}"? All posts and members will be permanently removed. This cannot be undone.`)) e.preventDefault(); }}
-                    className="w-full rounded-2xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-xs font-bold text-danger hover:bg-danger/20 transition-colors cursor-pointer text-center"
-                  >
-                    Delete Community
-                  </button>
-                </form>
+                <DeleteCommunityButton
+                  communityId={community.id}
+                  communityName={community.name}
+                />
               </div>
             )}
 
@@ -394,9 +391,11 @@ export default async function CommunityHomePage({
                     className="relative flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken font-bold text-ink text-xs hover:-translate-y-0.5 transition-transform shrink-0"
                   >
                     {mem.profile?.avatar_url ? (
-                      <img
+                      <Image
                         src={mem.profile.avatar_url}
                         alt={mem.profile.full_name}
+                        width={40}
+                        height={40}
                         className="h-full w-full rounded-full object-cover"
                       />
                     ) : (

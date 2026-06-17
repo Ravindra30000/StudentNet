@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -66,7 +67,7 @@ export default function NavbarUserMenu({
       >
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-green font-heading text-xs font-bold text-white overflow-hidden">
           {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+            <Image src={avatarUrl} alt={displayName} width={32} height={32} className="h-full w-full object-cover" />
           ) : (
             initials
           )}

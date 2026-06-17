@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -90,7 +91,7 @@ export default function NavbarMobile({
               <div className="flex items-center gap-3.5 bg-white/5 border border-white/10 rounded-2xl p-4.5">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 font-heading text-sm font-bold text-accent-gold overflow-hidden border border-white/15">
                   {avatarUrl ? (
-                    <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                    <Image src={avatarUrl} alt={displayName} width={48} height={48} className="h-full w-full object-cover" />
                   ) : (
                     initials
                   )}

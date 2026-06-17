@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import {
   Rocket,
@@ -218,9 +219,11 @@ export default async function StartupsBoardPage({
                   <div className="mt-8 pt-6 border-t border-border/30 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {startup.founder?.avatar_url ? (
-                        <img
+                        <Image
                           src={startup.founder.avatar_url}
                           alt={startup.founder.full_name}
+                          width={36}
+                          height={36}
                           className="w-9 h-9 rounded-full object-cover border border-border"
                         />
                       ) : (

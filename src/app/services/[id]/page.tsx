@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { createOrder } from "@/app/dashboard/services/actions";
 import { startConversation } from "@/app/dashboard/messages/actions";
@@ -100,9 +101,11 @@ export default async function ServiceDetailPage({
             </h1>
             <div className="flex items-center gap-3">
               {owner?.avatar_url ? (
-                <img
+                <Image
                   src={owner.avatar_url}
                   alt={owner.full_name}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
@@ -232,9 +235,11 @@ export default async function ServiceDetailPage({
             {/* Seller Info Card */}
             <div className="bg-surface rounded-2xl p-6 shadow-card flex flex-col items-center gap-4 border border-border text-center">
               {owner?.avatar_url ? (
-                <img
+                <Image
                   src={owner.avatar_url}
                   alt={owner.full_name}
+                  width={64}
+                  height={64}
                   className="w-16 h-16 rounded-full object-cover"
                 />
               ) : (

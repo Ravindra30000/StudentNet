@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { registerForEvent, unregisterFromEvent } from "../actions";
 import { revalidatePath } from "next/cache";
@@ -171,9 +172,11 @@ export default async function EventDetailPage({
                         className="relative flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken font-bold text-ink text-xs hover:-translate-y-0.5 transition-transform"
                       >
                         {attendee.avatar_url ? (
-                          <img
+                          <Image
                             src={attendee.avatar_url}
                             alt={attendee.full_name}
+                            width={40}
+                            height={40}
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (

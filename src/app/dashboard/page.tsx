@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import type { Project } from "@/lib/types";
 import { updateProfile } from "./actions";
@@ -494,9 +495,11 @@ export default async function DashboardPage({
                           className="group flex items-start gap-4 p-5 bg-surface border border-border/40 rounded-2xl hover:shadow-md hover:border-accent-green/30 transition-all duration-200"
                         >
                           {peer.avatar_url ? (
-                            <img
+                            <Image
                               src={peer.avatar_url}
                               alt={peer.full_name}
+                              width={44}
+                              height={44}
                               className="w-11 h-11 rounded-full object-cover border border-border shrink-0"
                             />
                           ) : (

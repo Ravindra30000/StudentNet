@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import {
   Building2,
@@ -201,9 +202,11 @@ export default async function StartupDetailPage({
               </h3>
               <div className="flex items-center gap-4">
                 {startup.founder.avatar_url ? (
-                  <img
+                  <Image
                     src={startup.founder.avatar_url}
                     alt={startup.founder.full_name}
+                    width={48}
+                    height={48}
                     className="w-12 h-12 rounded-full object-cover border border-border"
                   />
                 ) : (

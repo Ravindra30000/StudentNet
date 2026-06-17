@@ -1,7 +1,5 @@
 "use server";
 
-import { createNotification } from "@/lib/notifications";
-
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";

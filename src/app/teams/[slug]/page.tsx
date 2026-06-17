@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import {
   Users,
@@ -9,7 +10,7 @@ import {
   ArrowLeft,
   Globe,
 } from "lucide-react";
-import type { Team, TeamMember, Profile, Project } from "@/lib/types";
+import type { TeamMember, Profile, Project } from "@/lib/types";
 
 function GithubIcon({ className }: { className?: string }) {
   return (
@@ -87,9 +88,11 @@ export default async function TeamProfilePage({
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-accent-green text-surface font-heading text-3xl font-bold">
                   {team.avatar_url ? (
-                    <img
+                    <Image
                       src={team.avatar_url}
                       alt={team.name}
+                      width={80}
+                      height={80}
                       className="h-full w-full rounded-2xl object-cover"
                     />
                   ) : (
@@ -136,9 +139,11 @@ export default async function TeamProfilePage({
                       <div>
                         {project.cover_image_url ? (
                           <div className="mb-4 h-40 w-full overflow-hidden rounded-2xl bg-surface-sunken">
-                            <img
+                            <Image
                               src={project.cover_image_url}
                               alt={project.title}
+                              width={400}
+                              height={160}
                               className="h-full w-full object-cover transition-transform group-hover:scale-105"
                             />
                           </div>
@@ -219,9 +224,11 @@ export default async function TeamProfilePage({
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken font-bold text-ink text-sm">
                         {mem.profile?.avatar_url ? (
-                          <img
+                          <Image
                             src={mem.profile.avatar_url}
                             alt={mem.profile.full_name}
+                            width={40}
+                            height={40}
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
