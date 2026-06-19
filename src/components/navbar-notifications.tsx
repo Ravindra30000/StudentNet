@@ -127,9 +127,11 @@ export default function NavbarNotifications({ userId }: NavbarNotificationsProps
     fetchUnreadMessageCount();
     fetchNotifications();
 
+    const channelId = Math.random().toString(36).substring(2, 10);
+
     // Messages subscription: any inserts or updates in messages
     const messageChannel = supabase
-      .channel("navbar-messages-realtime")
+      .channel(`navbar-messages-${userId}-${channelId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
@@ -158,7 +160,7 @@ export default function NavbarNotifications({ userId }: NavbarNotificationsProps
 
     // Notifications subscription: updates or inserts on user's notifications
     const notifChannel = supabase
-      .channel("navbar-notifications-realtime")
+      .channel(`navbar-notifications-${userId}-${channelId}`)
       .on(
         "postgres_changes",
         {
