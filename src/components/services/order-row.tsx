@@ -1,9 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { Order, OrderStatus } from "@/lib/types";
-import { updateOrderStatus } from "@/app/dashboard/services/actions";
-import { CheckCircle, AlertTriangle, XCircle, ArrowRight } from "lucide-react";
+import { updateOrderStatus, completeOrderWithReview } from "@/app/dashboard/services/actions";
+import { CheckCircle, AlertTriangle, XCircle, ArrowRight, Star } from "lucide-react";
 import Link from "next/link";
 
 interface OrderRowProps {
@@ -17,6 +17,30 @@ interface OrderRowProps {
 
 export default function OrderRow({ order, role }: OrderRowProps) {
   const [isPending, startTransition] = useTransition();
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [communication, setCommunication] = useState(5);
+  const [delivery, setDelivery] = useState(5);
+  const [technicalSkill, setTechnicalSkill] = useState(5);
+  const [professionalism, setProfessionalism] = useState(5);
+  const [comment, setComment] = useState("");
+
+  const handleReviewSubmit = () => {
+    startTransition(async () => {
+      try {
+        await completeOrderWithReview(order.id, {
+          communication,
+          delivery,
+          technicalSkill,
+          professionalism,
+          comment,
+        });
+        setShowReviewModal(false);
+      } catch (err: unknown) {
+        const error = err as Error;
+        alert(error.message || "Failed to submit review.");
+      }
+    });
+  };
 
   const handleStatusUpdate = (newStatus: OrderStatus) => {
     if (newStatus === "cancelled" && !confirm("Are you sure you want to cancel this order?")) {
@@ -141,7 +165,7 @@ export default function OrderRow({ order, role }: OrderRowProps) {
             <>
               <button
                 disabled={isPending}
-                onClick={() => handleStatusUpdate("completed")}
+                onClick={() => setShowReviewModal(true)}
                 className="bg-success text-white hover:opacity-90 transition-opacity font-semibold text-xs px-4 py-2 rounded-full flex items-center gap-1 disabled:opacity-50 cursor-pointer"
               >
                 Accept & Complete <CheckCircle size={12} />
@@ -178,6 +202,141 @@ export default function OrderRow({ order, role }: OrderRowProps) {
           )}
         </div>
       </div>
+
+      {/* Review & Rating Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface w-full max-w-md rounded-[28px] border border-border/40 p-6 md:p-8 shadow-card flex flex-col gap-6 relative animate-in fade-in zoom-in-95 duration-200">
+            <div>
+              <h3 className="font-heading text-xl font-bold text-ink">Rate Freelancer</h3>
+              <p className="text-xs text-muted mt-1">
+                Please rate your experience with {partnerName || "the seller"} before completing the order.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {/* Star Rating Inputs */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-ink uppercase tracking-wider">Communication</label>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setCommunication(star)}
+                      className="focus:outline-none transition-transform active:scale-95"
+                    >
+                      <Star
+                        className={`w-6 h-6 transition-colors ${
+                          star <= communication
+                            ? "text-accent-gold fill-accent-gold"
+                            : "text-border fill-transparent hover:text-accent-gold/40"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-ink uppercase tracking-wider">Delivery Time</label>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setDelivery(star)}
+                      className="focus:outline-none transition-transform active:scale-95"
+                    >
+                      <Star
+                        className={`w-6 h-6 transition-colors ${
+                          star <= delivery
+                            ? "text-accent-gold fill-accent-gold"
+                            : "text-border fill-transparent hover:text-accent-gold/40"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-ink uppercase tracking-wider">Technical Skill</label>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setTechnicalSkill(star)}
+                      className="focus:outline-none transition-transform active:scale-95"
+                    >
+                      <Star
+                        className={`w-6 h-6 transition-colors ${
+                          star <= technicalSkill
+                            ? "text-accent-gold fill-accent-gold"
+                            : "text-border fill-transparent hover:text-accent-gold/40"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-ink uppercase tracking-wider">Professionalism</label>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setProfessionalism(star)}
+                      className="focus:outline-none transition-transform active:scale-95"
+                    >
+                      <Star
+                        className={`w-6 h-6 transition-colors ${
+                          star <= professionalism
+                            ? "text-accent-gold fill-accent-gold"
+                            : "text-border fill-transparent hover:text-accent-gold/40"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Feedback Comment */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-bold text-ink uppercase tracking-wider">Comment (Optional)</label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Share your experience working with this student..."
+                  className="w-full min-h-[70px] rounded-xl border border-border/50 p-3 text-xs font-sans focus:outline-none focus:border-accent-green bg-surface-sunken"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setShowReviewModal(false)}
+                className="px-4 py-2 border border-border text-xs font-semibold rounded-full hover:bg-surface-sunken transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleReviewSubmit}
+                className="px-5 py-2 bg-success text-white text-xs font-semibold rounded-full hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isPending ? "Submitting..." : "Submit Review & Complete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

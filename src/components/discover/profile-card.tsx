@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Star, CheckCircle } from "lucide-react";
-import type { Skill } from "@/lib/types";
 
 const ROLE_LABELS: Record<string, string> = {
   student: "Student",
@@ -8,11 +7,6 @@ const ROLE_LABELS: Record<string, string> = {
   community_leader: "Community Leader",
   client: "Client",
 };
-
-interface ProfileSkill {
-  verified: boolean;
-  skills: Skill;
-}
 
 export interface ProfileCardData {
   id: string;
@@ -26,7 +20,17 @@ export interface ProfileCardData {
   role: string;
   bio: string | null;
   avatar_url: string | null;
-  profile_skills: ProfileSkill[];
+  profile_skills: {
+    verified: boolean;
+    skills: {
+      id: string | number;
+      name: string;
+      category: string | null;
+    } | null;
+  }[];
+  services?: { id: string; is_active: boolean }[];
+  startups?: { id: string }[];
+  reviews?: { overall: number }[];
 }
 
 interface ProfileCardProps {
@@ -36,9 +40,26 @@ interface ProfileCardProps {
 export default function ProfileCard({ profile }: ProfileCardProps) {
   const isVerified = profile.profile_skills.some((ps) => ps.verified);
   
-  // Deterministic rating based on the name length/characters so it stays consistent
   const charSum = profile.full_name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const rating = (4.5 + (charSum % 6) * 0.1).toFixed(1);
+
+  // Get real reviews and calculate rating
+  const ratings = profile.reviews?.map((r) => Number(r.overall)) || [];
+  const rating = ratings.length > 0
+    ? (ratings.reduce((sum, val) => sum + val, 0) / ratings.length).toFixed(1)
+    : null;
+
+  // Get real availability status (active freelance service or active startup founder)
+  const isAvailable = (profile.services?.some((s) => s.is_active) || (profile.startups && profile.startups.length > 0)) ?? false;
+
+  // Filter out any skills that are null
+  const validSkills = profile.profile_skills.filter((ps) => ps.skills !== null) as {
+    verified: boolean;
+    skills: {
+      id: string | number;
+      name: string;
+      category: string | null;
+    };
+  }[];
 
   // Deterministic background gradient for initials avatar fallback
   const gradients = [
@@ -111,9 +132,9 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
       {/* Footer Meta Row */}
       <div className="flex flex-col gap-4">
         {/* Skill Chips */}
-        {profile.profile_skills.length > 0 && (
+        {validSkills.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {profile.profile_skills.slice(0, 3).map(({ skills, verified }) => (
+            {validSkills.slice(0, 3).map(({ skills, verified }) => (
               <span
                 key={skills.id}
                 className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 ${
@@ -126,28 +147,36 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
                 {verified && <span className="w-1 h-1 rounded-full bg-accent-green" />}
               </span>
             ))}
-            {profile.profile_skills.length > 3 && (
+            {validSkills.length > 3 && (
               <span className="px-2 py-1 rounded-full text-xs font-semibold bg-surface-sunken border border-border text-muted">
-                +{profile.profile_skills.length - 3}
+                +{validSkills.length - 3}
               </span>
             )}
           </div>
         )}
 
         {/* Rating and Availability */}
-        <div className="flex items-center justify-between pt-4 border-t border-border/50">
-          <div className="flex items-center gap-1">
-            <Star className="text-accent-gold w-4 h-4 fill-accent-gold" />
-            <span className="font-heading text-sm font-bold text-ink">{rating}</span>
+        {(rating !== null || isAvailable) && (
+          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+            {rating !== null ? (
+              <div className="flex items-center gap-1">
+                <Star className="text-accent-gold w-4 h-4 fill-accent-gold" />
+                <span className="font-heading text-sm font-bold text-ink">{rating} ({ratings.length})</span>
+              </div>
+            ) : (
+              <div />
+            )}
+            {isAvailable && (
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                </span>
+                <span className="text-xs text-muted font-semibold">Available</span>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-            </span>
-            <span className="text-xs text-muted font-semibold">Available</span>
-          </div>
-        </div>
+        )}
       </div>
     </Link>
   );

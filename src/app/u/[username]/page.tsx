@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Project, Skill, Service } from "@/lib/types";
 import ProjectCard from "@/components/profile/project-card";
 import { startConversation } from "@/app/dashboard/messages/actions";
+import { Star } from "lucide-react";
 
 
 const ROLE_LABELS: Record<string, string> = {
@@ -44,7 +45,7 @@ export default async function ProfilePage({
     await startConversation(profile.id);
   };
 
-  const [{ data: skillLinks }, { data: projects }, { data: services }] = await Promise.all([
+  const [{ data: skillLinks }, { data: projects }, { data: services }, { data: profileReviews }] = await Promise.all([
     supabase
       .from("profile_skills")
       .select("skills(id, name, category)")
@@ -60,7 +61,27 @@ export default async function ProfilePage({
       .eq("owner_id", profile.id)
       .eq("is_active", true)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("reviews")
+      .select(`
+        id,
+        overall,
+        comment,
+        created_at,
+        reviewer:profiles!reviewer_id (
+          full_name,
+          avatar_url,
+          username
+        )
+      `)
+      .eq("reviewee_id", profile.id)
+      .order("created_at", { ascending: false }),
   ]);
+
+  const ratings = profileReviews?.map((r) => Number(r.overall)) || [];
+  const avgRating = ratings.length > 0
+    ? (ratings.reduce((sum, val) => sum + val, 0) / ratings.length).toFixed(1)
+    : null;
 
   const skills: Skill[] = (skillLinks ?? [])
     .map((row) => row.skills as unknown as Skill)
@@ -122,6 +143,13 @@ export default async function ProfilePage({
                 ? ` · Class of ${profile.graduation_year}`
                 : ""}
             </p>
+            {avgRating !== null && (
+              <div className="flex items-center gap-1.5 mt-3 bg-accent-gold/5 border border-accent-gold/20 rounded-full px-3 py-1 w-fit text-accent-gold font-semibold text-xs shadow-sm">
+                <Star className="w-3.5 h-3.5 fill-accent-gold" />
+                <span className="font-heading text-ink">{avgRating}</span>
+                <span className="text-[10px] text-muted">({ratings.length} {ratings.length === 1 ? "review" : "reviews"})</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -240,6 +268,72 @@ export default async function ProfilePage({
           <p className="mt-4 text-muted">No projects yet.</p>
         )}
       </div>
+
+      {/* Reviews Section */}
+      {profileReviews && profileReviews.length > 0 && (
+        <div className="mt-16 border-t border-border/40 pt-12">
+          <div className="flex items-center gap-2 mb-8">
+            <h2 className="font-heading text-xl font-bold text-ink">Client Reviews</h2>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-surface-sunken border border-border text-muted">
+              {profileReviews.length}
+            </span>
+          </div>
+
+          <div className="space-y-6">
+            {profileReviews.map((rev) => {
+              const dateStr = new Date(rev.created_at).toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+              });
+
+              const reviewer = (Array.isArray(rev.reviewer) ? rev.reviewer[0] : rev.reviewer) as {
+                full_name: string;
+                avatar_url: string | null;
+                username: string;
+              } | null;
+
+              return (
+                <div key={rev.id} className="bg-surface p-6 rounded-2xl border border-border/40 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-3">
+                      {reviewer?.avatar_url ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={reviewer.avatar_url}
+                          alt={reviewer.full_name}
+                          className="w-10 h-10 rounded-full object-cover border border-border/50"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-surface-sunken flex items-center justify-center border border-border/50">
+                          <span className="text-xs font-bold text-muted">
+                            {reviewer?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase() || "?"}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-bold text-sm text-ink">{reviewer?.full_name}</h4>
+                        <p className="text-[10px] text-muted">
+                          @{reviewer?.username} • {dateStr}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 bg-accent-gold/10 px-2 py-1 rounded-full text-accent-gold">
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      <span className="text-xs font-bold">{Number(rev.overall).toFixed(1)}</span>
+                    </div>
+                  </div>
+                  {rev.comment && (
+                    <p className="text-sm text-muted mt-3 italic leading-relaxed">
+                      &ldquo;{rev.comment}&rdquo;
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

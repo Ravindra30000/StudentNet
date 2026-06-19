@@ -67,9 +67,13 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
   // 1. Fetch all profiles with skills for filtering
   const { data: profilesData } = await supabase
     .from("profiles")
-    .select(
-      "id, username, full_name, college, branch, graduation_year, company, profession, role, bio, avatar_url, profile_skills(verified, skills(id, name, category))"
-    )
+    .select(`
+      id, username, full_name, college, branch, graduation_year, company, profession, role, bio, avatar_url,
+      profile_skills(verified, skills(id, name, category)),
+      services(id, is_active),
+      startups(id),
+      reviews:reviews!reviewee_id(overall)
+    `)
     .order("created_at", { ascending: false });
 
   const profiles = (profilesData ?? []) as unknown as ProfileCardData[];

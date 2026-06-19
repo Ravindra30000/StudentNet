@@ -212,3 +212,92 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
 
   revalidatePath("/dashboard/services");
 }
+
+export async function completeOrderWithReview(
+  orderId: string,
+  review: {
+    communication: number;
+    delivery: number;
+    technicalSkill: number;
+    professionalism: number;
+    comment: string;
+  }
+) {
+  const { supabase, user } = await requireUser();
+
+  // 1. Fetch order details to verify caller is the buyer
+  const { data: order, error: fetchError } = await supabase
+    .from("orders")
+    .select("buyer_id, seller_id, service_id")
+    .eq("id", orderId)
+    .single();
+
+  if (fetchError || !order) {
+    throw new Error("Order not found");
+  }
+
+  if (order.buyer_id !== user.id) {
+    throw new Error("Only the buyer can complete the order and leave a review");
+  }
+
+  // Calculate overall rating as the average of the 4 dimensions
+  const overall = (review.communication + review.delivery + review.technicalSkill + review.professionalism) / 4;
+
+  // 2. Insert the review
+  const { error: reviewError } = await supabase.from("reviews").insert({
+    order_id: orderId,
+    reviewer_id: user.id,
+    reviewee_id: order.seller_id,
+    communication: review.communication,
+    delivery: review.delivery,
+    technical_skill: review.technicalSkill,
+    professionalism: review.professionalism,
+    overall,
+    comment: review.comment.trim() || null,
+  });
+
+  if (reviewError) {
+    console.error("Error creating review:", reviewError);
+    throw new Error("Failed to submit review");
+  }
+
+  // 3. Update order status to completed
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({ status: "completed" })
+    .eq("id", orderId);
+
+  if (updateError) {
+    console.error("Error updating order status:", updateError);
+    throw new Error("Failed to complete order");
+  }
+
+  // 4. Create in-app notification for the seller
+  try {
+    const { data: buyerProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const buyerName = buyerProfile?.full_name || "A buyer";
+
+    const { createNotification } = await import("@/lib/notifications");
+    await createNotification(
+      supabase,
+      order.seller_id,
+      "application", // fallback notification type
+      {
+        title: "New Review Received",
+        message: `${buyerName} completed your order and left a ${overall.toFixed(1)}-star review!`,
+        link: `/dashboard/services?tab=seller`,
+      }
+    );
+  } catch (notifErr) {
+    console.error("Error creating review notification:", notifErr);
+  }
+
+  revalidatePath("/dashboard/services");
+  revalidatePath(`/services/${order.service_id}`);
+}
+

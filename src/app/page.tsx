@@ -43,6 +43,16 @@ export default async function Home() {
           name,
           category
         )
+      ),
+      services (
+        id,
+        is_active
+      ),
+      startups (
+        id
+      ),
+      reviews:reviews!reviewee_id (
+        overall
       )
     `)
     .eq("role", "student")
