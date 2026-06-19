@@ -89,6 +89,9 @@ export default async function StartupDashboardPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-20">
+      <div className="bg-accent-gold/10 border border-accent-gold/30 text-ink p-4 rounded-xl mb-6 text-xs font-mono">
+        DEBUG INFO: Logged in as: {user.email} (ID: {user.id}). Startup profile: {startup ? `"${startup.name}" (ID: ${startup.id}, Founder: ${startup.founder_id})` : "None (State A)"}
+      </div>
       {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between border-b border-border/40 pb-8">
         <div>

@@ -12,6 +12,7 @@ import {
   Layers,
 } from "lucide-react";
 import RoleList from "@/components/startups/role-list";
+import DeleteStartupButton from "@/components/ui/delete-startup-button";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,24 @@ export default async function StartupDetailPage({
           </div>
         )}
 
+        {/* Danger Zone — founder only, shown above the grid so it's visible on all screen sizes */}
+        {user?.id === startup.founder.id && (
+          <div className="mb-12 rounded-3xl border border-danger/30 bg-danger/5 p-6 md:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 shadow-sm">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-danger text-base font-bold">&#9888;</span>
+                <h3 className="font-heading text-sm font-bold text-danger">Delete Startup</h3>
+              </div>
+              <p className="text-xs text-muted leading-relaxed">
+                Permanently delete <span className="font-semibold text-ink">{startup.name}</span> and all its open roles and applications. This action is irreversible.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <DeleteStartupButton startupId={startup.id} startupName={startup.name} />
+            </div>
+          </div>
+        )}
+
         {/* Header Block */}
         <div className="bg-surface border border-border/40 rounded-3xl p-6 md:p-8 shadow-card flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
           <div className="flex items-center gap-6">
@@ -120,6 +139,14 @@ export default async function StartupDetailPage({
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            {user?.id === startup.founder.id && (
+              <Link
+                href="/dashboard/startup"
+                className="w-full sm:w-auto rounded-full bg-ink hover:opacity-90 px-5 py-3 font-semibold text-xs text-white flex items-center justify-center gap-2 transition-opacity"
+              >
+                Manage Startup
+              </Link>
+            )}
             {user?.id !== startup.founder.id && (
               <Link
                 href={`/dashboard/messages?startWith=${startup.founder.id}`}
