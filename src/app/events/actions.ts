@@ -65,28 +65,50 @@ export async function createEvent(formData: FormData) {
     redirect(`/dashboard/communities?error=${encodeURIComponent(error.message)}`);
   }
 
-  // Notify all users about the scheduled event (excluding creator)
+  // Notify users about the scheduled event
   try {
-    let communityName = "";
     if (communityId) {
       const { data: comm } = await supabase
         .from("communities")
         .select("name")
         .eq("id", communityId)
         .maybeSingle();
-      if (comm) communityName = ` for ${comm.name}`;
-    }
 
-    await notifyAllUsers(
-      supabase,
-      "event",
-      {
-        title: "New Event Scheduled",
-        message: `The event '${title}' has been scheduled${communityName}!`,
-        link: `/events/${slug}`,
-      },
-      user.id
-    );
+      const communityName = comm?.name || "Community";
+
+      // Fetch community members excluding creator
+      const { data: members } = await supabase
+        .from("community_members")
+        .select("profile_id")
+        .eq("community_id", communityId)
+        .neq("profile_id", user.id);
+
+      if (members && members.length > 0) {
+        const notifications = members.map((m) => ({
+          profile_id: m.profile_id,
+          type: "event",
+          payload: {
+            title: "New Event Scheduled",
+            message: `A new event "${title}" has been scheduled in your community "${communityName}".`,
+            link: `/events/${slug}`,
+          },
+        }));
+
+        await supabase.from("notifications").insert(notifications);
+      }
+    } else {
+      // Global event: notify all users
+      await notifyAllUsers(
+        supabase,
+        "event",
+        {
+          title: "New Event Scheduled",
+          message: `The event '${title}' has been scheduled!`,
+          link: `/events/${slug}`,
+        },
+        user.id
+      );
+    }
   } catch (notifErr) {
     console.error("Error creating event notification:", notifErr);
   }

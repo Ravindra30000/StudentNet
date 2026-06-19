@@ -223,6 +223,9 @@ export default function NavbarNotifications({ userId }: NavbarNotificationsProps
         return <Calendar className="h-4 w-4 text-accent-green" />;
       case "startup":
         return <Rocket className="h-4 w-4 text-accent-green" />;
+      case "message":
+      case "community_post":
+        return <MessageSquare className="h-4 w-4 text-accent-green" />;
       default:
         return <Info className="h-4 w-4 text-accent-green" />;
     }

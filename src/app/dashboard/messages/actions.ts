@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID } from "crypto";
+import { createNotification } from "@/lib/notifications";
 
 export async function startConversation(recipientId: string) {
   const supabase = await createClient();
@@ -106,6 +107,41 @@ export async function sendMessage(conversationId: string, body: string) {
   if (error) {
     console.error("Error sending message:", error);
     throw new Error("Failed to send message");
+  }
+
+  // Notify other participants
+  try {
+    const { data: participants } = await supabase
+      .from("conversation_participants")
+      .select("profile_id")
+      .eq("conversation_id", conversationId)
+      .neq("profile_id", user.id);
+
+    if (participants && participants.length > 0) {
+      const { data: senderProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const senderName = senderProfile?.full_name || "Someone";
+      const bodyPreview = trimmedBody.length > 50 ? trimmedBody.substring(0, 50) + "..." : trimmedBody;
+
+      for (const p of participants) {
+        await createNotification(
+          supabase,
+          p.profile_id,
+          "message",
+          {
+            title: "New Message",
+            message: `${senderName} sent you a message: "${bodyPreview}"`,
+            link: `/dashboard/messages?id=${conversationId}`,
+          }
+        );
+      }
+    }
+  } catch (notifErr) {
+    console.error("Error creating message notification:", notifErr);
   }
 
   revalidatePath("/dashboard/messages");

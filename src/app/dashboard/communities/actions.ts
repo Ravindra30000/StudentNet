@@ -144,6 +144,53 @@ export async function createCommunityPost(formData: FormData) {
     redirect(`/communities/${slug}?error=${encodeURIComponent(error.message)}`);
   }
 
+  // Get community name
+  let communityName = "Community";
+  try {
+    const { data: community } = await supabase
+      .from("communities")
+      .select("name")
+      .eq("id", communityId)
+      .maybeSingle();
+    if (community) communityName = community.name;
+  } catch (commErr) {
+    console.error("Error fetching community name for notification:", commErr);
+  }
+
+  // Notify other community members
+  try {
+    const { data: members } = await supabase
+      .from("community_members")
+      .select("profile_id")
+      .eq("community_id", communityId)
+      .neq("profile_id", user.id);
+
+    if (members && members.length > 0) {
+      const { data: authorProfile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const authorName = authorProfile?.full_name || "A member";
+      const bodyPreview = body.length > 50 ? body.substring(0, 50) + "..." : body;
+
+      const notifications = members.map((m) => ({
+        profile_id: m.profile_id,
+        type: "community_post",
+        payload: {
+          title: `New Post in ${communityName}`,
+          message: `${authorName} posted: "${bodyPreview}"`,
+          link: `/communities/${slug}`,
+        },
+      }));
+
+      await supabase.from("notifications").insert(notifications);
+    }
+  } catch (notifErr) {
+    console.error("Error creating community post notifications:", notifErr);
+  }
+
   revalidatePath(`/communities/${slug}`);
   redirect(`/communities/${slug}`);
 }
