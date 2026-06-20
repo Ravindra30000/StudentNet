@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { CommunityPost, CommunityMember, Profile, Event } from "@/lib/types";
 import DeleteCommunityButton from "@/components/ui/delete-community-button";
+import CommunityCoverImage from "@/components/ui/community-cover-image";
 
 interface PostWithAuthor extends Omit<CommunityPost, 'author_id' | 'author'> {
   author_id: string;
@@ -163,19 +164,13 @@ export default async function CommunityHomePage({
 
         {/* Banner Card */}
         <div className="relative overflow-hidden rounded-3xl bg-ink px-8 py-16 text-surface shadow-sm">
-          {community.cover_image_url ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={community.cover_image_url}
-                alt={community.name}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/65 to-ink/40" />
-            </>
-          ) : (
-            <div className={`absolute inset-0 bg-gradient-to-br ${getBannerGradient(community.name)}`} />
-          )}
+          <CommunityCoverImage
+            coverImageUrl={community.cover_image_url}
+            name={community.name}
+            className="absolute inset-0 h-full w-full object-cover"
+            gradientClass={`absolute inset-0 bg-gradient-to-br ${getBannerGradient(community.name)}`}
+            overlay={<div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/65 to-ink/40" />}
+          />
           <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
               <h1 className="font-heading text-4xl font-extrabold tracking-tight md:text-5xl">

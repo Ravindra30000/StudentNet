@@ -6,6 +6,7 @@ import { Users, Plus, Check, ArrowRight } from "lucide-react";
 import type { Community } from "@/lib/types";
 import ExpandableText from "@/components/ui/expandable-text";
 import AvatarStack from "@/components/ui/avatar-stack";
+import CommunityCoverImage from "@/components/ui/community-cover-image";
 
 interface RawCommunityMember {
   profile_id: string;
@@ -158,16 +159,12 @@ export default async function CommunitiesDirectoryPage() {
                 >
                   <div>
                     {/* Cover Image Strip */}
-                    {comm.cover_image_url ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={comm.cover_image_url}
-                        alt={comm.name}
-                        className="h-24 w-full object-cover"
-                      />
-                    ) : (
-                      <div className={`h-24 w-full bg-gradient-to-r ${getGradient(comm.name)}`} />
-                    )}
+                    <CommunityCoverImage
+                      coverImageUrl={comm.cover_image_url}
+                      name={comm.name}
+                      className="h-24 w-full object-cover"
+                      gradientClass={`h-24 w-full bg-gradient-to-r ${getGradient(comm.name)}`}
+                    />
                     
                     <div className="p-6">
                       <h3 className="font-heading text-lg font-bold text-ink hover:underline">
