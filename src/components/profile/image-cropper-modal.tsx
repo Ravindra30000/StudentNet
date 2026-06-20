@@ -164,6 +164,17 @@ export default function ImageCropperModal({
     }
   };
 
+  const handleUseOriginal = async () => {
+    try {
+      const response = await fetch(imageSrc);
+      const blob = await response.blob();
+      onConfirm(blob);
+    } catch (err) {
+      console.error("Failed to load original image blob:", err);
+      onCancel();
+    }
+  };
+
   const getImgStyle = () => {
     if (!dimensions) {
       return {
@@ -265,21 +276,30 @@ export default function ImageCropperModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 py-3 px-4 rounded-[16px] border border-border text-sm font-semibold text-ink hover:bg-surface-sunken transition-all"
-          >
-            Cancel
-          </button>
+        <div className="flex flex-col gap-2.5 mt-2">
           <button
             type="button"
             onClick={handleCrop}
-            className="flex-1 py-3 px-4 rounded-[16px] bg-accent-green hover:bg-accent-green/90 text-sm font-semibold text-white transition-all shadow-md"
+            className="w-full py-3 px-4 rounded-[16px] bg-accent-green hover:bg-accent-green/90 text-sm font-semibold text-white transition-all shadow-md cursor-pointer"
           >
             Apply Crop
           </button>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 py-2.5 px-4 rounded-[16px] border border-border text-xs font-semibold text-ink hover:bg-surface-sunken transition-all cursor-pointer text-center"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleUseOriginal}
+              className="flex-1 py-2.5 px-4 rounded-[16px] border border-border text-xs font-semibold text-ink hover:bg-surface-sunken transition-all cursor-pointer text-center"
+            >
+              Use Original (No Crop)
+            </button>
+          </div>
         </div>
       </div>
     </div>

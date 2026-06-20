@@ -87,12 +87,22 @@ export default function ProjectCoverUpload({ defaultValue }: ProjectCoverUploadP
           className="absolute inset-0 cursor-pointer flex flex-col items-center justify-center"
         >
           {coverUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={coverUrl}
-              alt="Project cover preview"
-              className="w-full h-full object-cover"
-            />
+            <div className="relative w-full h-full overflow-hidden">
+              {/* Soft blurred background layer to prevent raw side-bars */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={coverUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover blur-lg opacity-25 scale-[1.08] pointer-events-none"
+              />
+              {/* Centered contained front layer showing full screenshot */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={coverUrl}
+                alt="Project cover preview"
+                className="relative z-10 w-full h-full object-contain p-2"
+              />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-muted gap-2">
               <Camera className="w-10 h-10 opacity-70 group-hover:scale-110 transition-transform group-hover:text-accent-green" />
@@ -104,14 +114,14 @@ export default function ProjectCoverUpload({ defaultValue }: ProjectCoverUploadP
 
           {/* Hover overlay */}
           {coverUrl && (
-            <div className="absolute inset-0 bg-ink/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-0 bg-ink/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
               <Camera className="w-10 h-10 text-white" />
             </div>
           )}
 
           {/* Uploading loading spinner */}
           {uploading && (
-            <div className="absolute inset-0 bg-surface/80 flex items-center justify-center">
+            <div className="absolute inset-0 bg-surface/80 flex items-center justify-center z-30">
               <Loader2 className="w-10 h-10 animate-spin text-accent-green" />
             </div>
           )}

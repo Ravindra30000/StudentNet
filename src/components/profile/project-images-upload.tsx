@@ -176,18 +176,26 @@ export default function ProjectImagesUpload({ defaultValues }: ProjectImagesUplo
             key={url}
             className="relative group aspect-video rounded-xl overflow-hidden border border-border bg-surface-sunken shadow-sm"
           >
+            {/* Soft blurred background layer to prevent raw side-bars */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover blur-lg opacity-25 scale-[1.08] pointer-events-none"
+            />
+            {/* Centered contained front layer showing full screenshot */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={url}
               alt={`Project screenshot ${index + 1}`}
-              className="w-full h-full object-cover"
+              className="relative z-10 w-full h-full object-contain p-1.5"
             />
             
             {/* Delete button */}
             <button
               type="button"
               onClick={() => removeImage(url)}
-              className="absolute top-1.5 right-1.5 p-1 rounded-full bg-ink/70 text-white hover:bg-danger transition-colors opacity-0 group-hover:opacity-100 duration-150 shadow-sm"
+              className="absolute top-1.5 right-1.5 p-1 rounded-full bg-ink/70 text-white hover:bg-danger transition-colors opacity-0 group-hover:opacity-100 duration-150 shadow-sm z-20"
             >
               <X className="w-3.5 h-3.5" />
             </button>
