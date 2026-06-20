@@ -102,10 +102,10 @@ export default function ServiceCard({ service, variant = "grid" }: ServiceCardPr
   return (
     <Link
       href={`/services/${service.id}`}
-      className="group bg-surface rounded-[20px] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden border border-border/20"
+      className="group bg-surface rounded-[20px] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden border border-border/20 relative"
     >
       {/* Cover Image/Gradient Area */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-surface-sunken">
+      <div className="relative z-0 aspect-[16/9] w-full overflow-hidden bg-surface-sunken">
         <div className={`absolute inset-0 bg-gradient-to-br ${gradientClasses} flex items-center justify-center`}>
           <span className="font-heading font-extrabold text-white/20 text-5xl tracking-wider select-none">
             {initials}

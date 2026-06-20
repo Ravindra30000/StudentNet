@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import type { StartupRole } from "@/lib/types";
 import StartupFilters from "@/components/startups/startup-filters";
+import ExpandableText from "@/components/ui/expandable-text";
 
 export const dynamic = "force-dynamic";
 
@@ -174,28 +175,26 @@ export default async function StartupsBoardPage({
                   <div>
                     {/* Top Header */}
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-heading text-lg font-extrabold ${avatarClass}`}>
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-heading text-lg font-extrabold ${avatarClass} shrink-0`}>
                           {initials}
                         </div>
-                        <div>
-                          <h3 className="font-heading text-xl font-bold text-ink">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-heading text-xl font-bold text-ink truncate">
                             {startup.name}
                           </h3>
-                          <span className="text-xs font-semibold uppercase tracking-wider text-muted mt-1 inline-block">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-muted mt-1 block">
                             {startup.industry}
                           </span>
                         </div>
                       </div>
-                      <span className="text-xs font-bold bg-surface-sunken border border-border/50 text-ink px-3 py-1 rounded-full uppercase">
+                      <span className="text-xs font-bold bg-surface-sunken border border-border/50 text-ink px-3 py-1 rounded-full uppercase shrink-0">
                         {startup.stage} STAGE
                       </span>
                     </div>
 
                     {/* Description */}
-                    <p className="text-muted text-sm mt-5 leading-relaxed line-clamp-3">
-                      {startup.idea}
-                    </p>
+                    <ExpandableText text={startup.idea} limit={150} />
 
                     {/* Roles Needed */}
                     {startup.startup_roles && startup.startup_roles.length > 0 && (

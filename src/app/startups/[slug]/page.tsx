@@ -119,20 +119,20 @@ export default async function StartupDetailPage({
 
         {/* Header Block */}
         <div className="bg-surface border border-border/40 rounded-3xl p-6 md:p-8 shadow-card flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-12">
-          <div className="flex items-center gap-6">
-            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center font-heading text-2xl font-extrabold ${avatarClass}`}>
+          <div className="flex items-center gap-6 min-w-0 flex-1">
+            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center font-heading text-2xl font-extrabold ${avatarClass} shrink-0`}>
               {initials}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="font-heading text-3xl font-extrabold tracking-tight text-ink">
+                <h1 className="font-heading text-3xl font-extrabold tracking-tight text-ink break-words">
                   {startup.name}
                 </h1>
-                <span className="text-xs font-bold bg-surface-sunken border border-border/50 text-ink px-3 py-1 rounded-full uppercase">
+                <span className="text-xs font-bold bg-surface-sunken border border-border/50 text-ink px-3 py-1 rounded-full uppercase shrink-0">
                   {startup.stage} STAGE
                 </span>
               </div>
-              <p className="text-muted text-base mt-2">
+              <p className="text-muted text-base mt-2 break-words">
                 Building in <span className="font-semibold text-ink">{startup.industry}</span>
               </p>
             </div>

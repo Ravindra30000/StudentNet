@@ -4,6 +4,7 @@ import { joinCommunity, leaveCommunity } from "@/app/dashboard/communities/actio
 import { revalidatePath } from "next/cache";
 import { Users, Plus, Check, ArrowRight } from "lucide-react";
 import type { Community } from "@/lib/types";
+import ExpandableText from "@/components/ui/expandable-text";
 
 interface RawCommunity extends Omit<Community, 'leader_id' | 'leader'> {
   leader_id: string;
@@ -144,9 +145,11 @@ export default async function CommunitiesDirectoryPage() {
                         </span>
                       </div>
                       {comm.description && (
-                        <p className="text-muted mt-3 line-clamp-2 text-xs leading-relaxed">
-                          {comm.description}
-                        </p>
+                        <ExpandableText
+                          text={comm.description}
+                          limit={120}
+                          className="text-muted mt-3 text-xs leading-relaxed"
+                        />
                       )}
                     </div>
                   </div>
