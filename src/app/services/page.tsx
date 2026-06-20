@@ -26,8 +26,10 @@ interface ServicesPageProps {
     category?: string;
     seller?: string;
     sort?: string;
+    min_price?: string;
     max_price?: string;
     delivery?: string;
+    min_rating?: string;
     page?: string;
   }>;
 }
@@ -38,8 +40,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     category,
     seller,
     sort = "relevant",
+    min_price,
     max_price,
     delivery,
+    min_rating,
     page = "1",
   } = await searchParams;
 
@@ -91,7 +95,19 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   }
 
   if (q) {
-    queryBuilder = queryBuilder.or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`);
+    const isAlphanumeric = /[a-zA-Z0-9]/.test(q);
+    if (isAlphanumeric) {
+      queryBuilder = queryBuilder.textSearch("search_vector", q, {
+        config: "english",
+        type: "websearch"
+      });
+    } else {
+      queryBuilder = queryBuilder.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+    }
+  }
+
+  if (min_price) {
+    queryBuilder = queryBuilder.gte("price_inr", Number(min_price));
   }
 
   if (max_price) {
@@ -125,7 +141,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   }
 
   // 3. Map reviews & rating data
-  const services = ((rawServices as unknown as RawService[]) ?? []).map((s) => {
+  const mappedServices = ((rawServices as unknown as RawService[]) ?? []).map((s) => {
     const ratings = (s.owner?.reviews ?? []).map((r) => Number(r.overall));
     const avg_rating = ratings.length > 0
       ? ratings.reduce((sum: number, val: number) => sum + val, 0) / ratings.length
@@ -150,6 +166,13 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       }
     };
   });
+
+  // Apply min_rating filter in JS since rating is derived
+  let services = mappedServices;
+  if (min_rating) {
+    const minRatingVal = Number(min_rating);
+    services = mappedServices.filter((s) => (s.owner.avg_rating ?? 0) >= minRatingVal);
+  }
 
   // 4. Sort Services
   if (sort === "newest") {
@@ -182,8 +205,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     if (category) params.set("category", category);
     if (seller) params.set("seller", seller);
     if (sort && sort !== "relevant") params.set("sort", sort);
+    if (min_price) params.set("min_price", min_price);
     if (max_price) params.set("max_price", max_price);
     if (delivery) params.set("delivery", delivery);
+    if (min_rating) params.set("min_rating", min_rating);
     
     Object.entries(updates).forEach(([k, v]) => {
       if (v === null) {
@@ -281,7 +306,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedServices.map((service) => (
-                <ServiceCard key={service.id} service={service} />
+                <ServiceCard key={service.id} service={service} searchTerm={q} />
               ))}
             </div>
           )}

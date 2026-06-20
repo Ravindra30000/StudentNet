@@ -52,6 +52,7 @@ export interface Service {
   category: string;
   price_inr: number;
   delivery_days: number;
+  delivery_label?: string | null;
   is_active: boolean;
   created_at: string;
   profiles?: Profile;

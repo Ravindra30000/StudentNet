@@ -1,5 +1,9 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import { Service } from "@/lib/types";
+import { Combobox } from "@/components/ui/combobox";
 
 interface ServiceFormProps {
   service?: Service;
@@ -9,6 +13,7 @@ interface ServiceFormProps {
 
 export default function ServiceForm({ service, action, error }: ServiceFormProps) {
   const isEdit = !!service;
+  const [category, setCategory] = React.useState(service?.category || "Web Development");
 
   return (
     <form action={action} className="mt-10 flex flex-col gap-8">
@@ -44,25 +49,26 @@ export default function ServiceForm({ service, action, error }: ServiceFormProps
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="category" className="text-sm font-medium">
+          <label className="text-sm font-medium">
             Category
           </label>
-          <select
-            id="category"
+          <Combobox
             name="category"
-            defaultValue={service?.category || "Web Development"}
-            className="rounded-xl border border-border bg-surface px-4 py-3 text-base outline-none focus:border-accent-green"
-          >
-            <option value="Web Development">Web Development</option>
-            <option value="App Development">App Development</option>
-            <option value="Design">Design</option>
-            <option value="AI/ML">AI/ML</option>
-            <option value="Content">Content</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Business">Business</option>
-          </select>
+            options={[
+              "Web Development",
+              "App Development",
+              "Design",
+              "AI/ML",
+              "Content",
+              "Marketing",
+              "Business"
+            ]}
+            value={category}
+            onChange={setCategory}
+            placeholder="Select a category"
+          />
         </div>
 
         <div className="flex flex-col gap-2">
@@ -96,6 +102,20 @@ export default function ServiceForm({ service, action, error }: ServiceFormProps
             className="rounded-xl border border-border bg-surface px-4 py-3 text-base outline-none focus:border-accent-green"
           />
         </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="delivery_label" className="text-sm font-medium">
+            Delivery Description / Note (optional)
+          </label>
+          <input
+            id="delivery_label"
+            name="delivery_label"
+            type="text"
+            defaultValue={service?.delivery_label || ""}
+            placeholder="e.g. negotiable, 2 rounds of revision"
+            className="rounded-xl border border-border bg-surface px-4 py-3 text-base outline-none focus:border-accent-green"
+          />
+        </div>
       </div>
 
       {error && <p className="text-sm text-danger font-semibold">{decodeURIComponent(error)}</p>}
@@ -105,7 +125,7 @@ export default function ServiceForm({ service, action, error }: ServiceFormProps
           type="submit"
           className="rounded-full bg-ink px-7 py-3.5 text-base font-semibold text-white transition-opacity hover:opacity-90 shadow-sm cursor-pointer"
         >
-          {isEdit ? "Save Changes" : "Save Changes"}
+          {isEdit ? "Save Changes" : "Create Service"}
         </button>
         <Link
           href="/dashboard/services"

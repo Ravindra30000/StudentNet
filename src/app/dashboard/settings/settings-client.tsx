@@ -190,10 +190,10 @@ export default function SettingsClient({
                   isActive
                     ? isDanger
                       ? "bg-danger/10 text-danger"
-                      : "bg-[#F5F5F3] text-ink"
+                      : "bg-ink text-white"
                     : isDanger
                     ? "text-muted hover:text-danger hover:bg-danger/5"
-                    : "text-muted hover:text-ink hover:bg-[#F5F5F3]/50"
+                    : "text-muted hover:text-[#163832] hover:bg-[#163832]/10"
                 }`}
               >
                 {/* Active Indicator Line for desktop */}

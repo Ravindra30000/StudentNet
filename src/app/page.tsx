@@ -42,6 +42,50 @@ const HOME_CATEGORIES = [
 export default async function Home() {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let currentUserProfile: {
+    id: string;
+    college: string | null;
+    branch: string | null;
+    skills: string[];
+  } | null = null;
+
+  if (user) {
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select(`
+        id,
+        college,
+        branch,
+        profile_skills (
+          skills (
+            name
+          )
+        )
+      `)
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (userProfile) {
+      const skills = (((userProfile.profile_skills as unknown as {
+        skills: { name: string } | { name: string }[] | null;
+      }[]) || [])).map((ps) => {
+        const s = Array.isArray(ps.skills) ? ps.skills[0] : ps.skills;
+        return s?.name || "";
+      }).filter(Boolean);
+
+      currentUserProfile = {
+        id: userProfile.id,
+        college: userProfile.college,
+        branch: userProfile.branch,
+        skills,
+      };
+    }
+  }
+
   // 1. Fetch featured builders (role = 'student')
   const { data: dbProfiles } = await supabase
     .from("profiles")
@@ -78,18 +122,70 @@ export default async function Home() {
       )
     `)
     .eq("role", "student")
-    .limit(4);
+    .limit(20);
 
-  const featuredBuilders = ((dbProfiles as unknown as ProfileCardData[]) ?? []).map((p) => {
+  interface BuilderCandidate {
+    id: string;
+    college: string | null;
+    branch: string | null;
+    profile_skills?: {
+      skills?: { name: string } | { name: string }[] | null;
+    }[] | null;
+  }
+
+  // Scoring function
+  const getBuilderRecommendationScore = (builder: BuilderCandidate) => {
+    if (!currentUserProfile) return 0;
+    if (builder.id === currentUserProfile.id) return -100;
+
+    let score = 0;
+    if (currentUserProfile.college && builder.college && currentUserProfile.college.toLowerCase() === builder.college.toLowerCase()) {
+      score += 5;
+    }
+    if (currentUserProfile.branch && builder.branch && currentUserProfile.branch.toLowerCase() === builder.branch.toLowerCase()) {
+      score += 3;
+    }
+
+    const builderSkills = ((builder.profile_skills || []) as unknown as {
+      skills?: { name: string } | { name: string }[] | null;
+    }[]).map((ps) => {
+      const s = Array.isArray(ps.skills) ? ps.skills[0] : ps.skills;
+      return s?.name || "";
+    }).filter(Boolean);
+
+    const matchedSkillsCount = builderSkills.filter((s: string) => 
+      currentUserProfile?.skills.some((us: string) => us.toLowerCase() === s.toLowerCase())
+    ).length;
+
+    score += matchedSkillsCount * 2;
+
+    // Stable hash tiebreaker based on builder.id
+    let hash = 0;
+    for (let i = 0; i < builder.id.length; i++) {
+      hash = builder.id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const tiebreaker = (Math.abs(hash) % 100) / 1000;
+
+    return score + tiebreaker;
+  };
+
+  const candidateBuilders = ((dbProfiles as unknown as (ProfileCardData & BuilderCandidate)[]) ?? []).map((p) => {
     const activeServices = (p.services ?? []).filter((s) => s.is_active);
     const min_service_price = activeServices.length > 0
       ? Math.min(...activeServices.map((s) => s.price_inr ?? 0))
       : null;
+    const score = getBuilderRecommendationScore(p);
     return {
       ...p,
-      min_service_price
+      min_service_price,
+      score,
     };
   });
+
+  // Sort by recommendation score (descending) and select top 4
+  const featuredBuilders = candidateBuilders
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
 
   // 2. Fetch featured projects
   const { data: dbProjects } = await supabase

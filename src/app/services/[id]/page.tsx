@@ -197,7 +197,7 @@ export default async function ServiceDetailPage({
                   </div>
                 </div>
                 <div className="font-sans text-xs text-muted mb-1 flex items-center gap-1">
-                  <Clock size={14} /> Delivery in {service.delivery_days} days
+                  <Clock size={14} /> Delivery in {service.delivery_days} days {service.delivery_label ? `(${service.delivery_label})` : ""}
                 </div>
               </div>
 

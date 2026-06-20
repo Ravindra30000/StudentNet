@@ -72,27 +72,29 @@ export default async function StartupsBoardPage({
   }
 
   // Fetch startups with founder profile and roles
-  const { data: startupsData } = await supabase
+  let queryBuilder = supabase
     .from("startups")
     .select(`
       *,
       founder:profiles!founder_id (full_name, avatar_url, college),
       startup_roles (*)
-    `)
-    .order("created_at", { ascending: false });
+    `);
+
+  if (search) {
+    const isAlphanumeric = /[a-zA-Z0-9]/.test(search);
+    if (isAlphanumeric) {
+      queryBuilder = queryBuilder.textSearch("search_vector", search, {
+        config: "english",
+        type: "websearch"
+      });
+    } else {
+      queryBuilder = queryBuilder.or(`name.ilike.%${search}%,idea.ilike.%${search}%`);
+    }
+  }
+
+  const { data: startupsData } = await queryBuilder.order("created_at", { ascending: false });
 
   let startups = startupsData || [];
-
-  // Filter in memory for robust multi-filtering
-  if (search) {
-    const searchLower = search.toLowerCase();
-    startups = startups.filter(
-      (s) =>
-        s.name.toLowerCase().includes(searchLower) ||
-        s.idea.toLowerCase().includes(searchLower) ||
-        s.industry.toLowerCase().includes(searchLower)
-    );
-  }
 
   if (industry) {
     startups = startups.filter((s) =>

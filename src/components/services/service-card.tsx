@@ -9,6 +9,7 @@ export interface ServiceCardProps {
     category: string;
     price_inr: number;
     delivery_days: number;
+    delivery_label?: string | null;
     owner: {
       username: string;
       full_name: string;
@@ -20,9 +21,33 @@ export interface ServiceCardProps {
   };
   variant?: "grid" | "compact";
   isOwner?: boolean;
+  searchTerm?: string;
 }
 
-export default function ServiceCard({ service, variant = "grid" }: ServiceCardProps) {
+function HighlightMatch({ text, term }: { text: string; term?: string }) {
+  if (!term || !term.trim()) return <>{text}</>;
+  
+  // Clean up special characters from term for regex safety
+  const escapedTerm = term.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+  const regex = new RegExp(`(${escapedTerm})`, "gi");
+  const parts = text.split(regex);
+  
+  return (
+    <>
+      {parts.map((part, i) => 
+        regex.test(part) ? (
+          <mark key={i} className="bg-[#F5B83D]/30 text-inherit font-inherit">
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
+export default function ServiceCard({ service, variant = "grid", searchTerm }: ServiceCardProps) {
   // Deterministic gradient classes based on category initials
   const initials = service.category
     .split(" ")
@@ -73,7 +98,7 @@ export default function ServiceCard({ service, variant = "grid" }: ServiceCardPr
           <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
             <div className="flex justify-between items-start gap-2">
               <h4 className="font-heading text-xs font-bold text-ink truncate group-hover:text-accent-green transition-colors">
-                {service.title}
+                <HighlightMatch text={service.title} term={searchTerm} />
               </h4>
               {service.owner.avg_rating ? (
                 <div className="flex items-center gap-0.5 text-accent-gold shrink-0">
@@ -113,8 +138,8 @@ export default function ServiceCard({ service, variant = "grid" }: ServiceCardPr
         </div>
         
         {/* Delivery Days Badge (Top Right) */}
-        <span className="absolute top-4 right-4 bg-ink text-white font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
-          {service.delivery_days}d delivery
+        <span className="absolute top-4 right-4 bg-ink text-white font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm max-w-[80%] truncate">
+          {service.delivery_days}d delivery {service.delivery_label ? `(${service.delivery_label})` : ""}
         </span>
       </div>
 
@@ -148,7 +173,7 @@ export default function ServiceCard({ service, variant = "grid" }: ServiceCardPr
       <div className="px-6 pt-4 pb-6 flex-1 flex flex-col justify-between">
         <div className="space-y-2">
           <h3 className="font-heading text-base font-bold text-ink leading-snug line-clamp-2 group-hover:text-accent-green transition-colors">
-            {service.title}
+            <HighlightMatch text={service.title} term={searchTerm} />
           </h3>
           
           {/* Category Chip */}

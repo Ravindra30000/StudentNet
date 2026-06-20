@@ -331,18 +331,7 @@ export default async function DashboardCommunitiesPage({
                 />
               </div>
 
-              <div>
-                <label htmlFor="cover_image_url" className="block text-xs font-semibold text-ink">
-                  Banner Image URL (Optional)
-                </label>
-                <input
-                  type="url"
-                  id="cover_image_url"
-                  name="cover_image_url"
-                  placeholder="e.g., https://example.com/banner.png"
-                  className="mt-2 block w-full rounded-full border border-border px-4 py-2.5 text-xs focus:border-ink focus:outline-none bg-surface-sunken"
-                />
-              </div>
+
 
               <button
                 type="submit"

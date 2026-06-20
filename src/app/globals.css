@@ -52,3 +52,45 @@ body {
   color: var(--ink);
   font-family: var(--font-inter), sans-serif;
 }
+
+*:focus-visible {
+  outline: none;
+}
+
+/* Global <a> link transitions (when not styled specifically as buttons or badge pills) */
+a:not([class*="bg-"]):not([class*="btn-"]):not([class*="rounded-full"]):not(.nav-link) {
+  transition: color 120ms ease;
+}
+a:not([class*="bg-"]):not([class*="btn-"]):not([class*="rounded-full"]):not(.nav-link):hover {
+  color: #163832;
+}
+
+/* Clickable Cards */
+.clickable-card {
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.clickable-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(20, 21, 26, 0.08);
+}
+.clickable-card:active {
+  transform: translateY(0px);
+  box-shadow: var(--shadow-card);
+}
+
+/* Selectable Chips / Skill Tags */
+.selectable-chip {
+  transition: all 120ms ease;
+}
+.selectable-chip:hover:not(.selected) {
+  background-color: rgba(22, 56, 50, 0.1);
+  border-color: rgba(22, 56, 50, 0.3);
+}
+
+/* Sidebar Nav Items (inactive hover) */
+.sidebar-nav-item:hover:not(.active) {
+  background-color: rgba(22, 56, 50, 0.1);
+  color: #163832;
+  border-radius: 9999px;
+}
+

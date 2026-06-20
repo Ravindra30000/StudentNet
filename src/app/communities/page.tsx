@@ -5,10 +5,20 @@ import { revalidatePath } from "next/cache";
 import { Users, Plus, Check, ArrowRight } from "lucide-react";
 import type { Community } from "@/lib/types";
 import ExpandableText from "@/components/ui/expandable-text";
+import AvatarStack from "@/components/ui/avatar-stack";
+
+interface RawCommunityMember {
+  profile_id: string;
+  profiles: {
+    avatar_url: string | null;
+    full_name: string | null;
+    username: string | null;
+  } | null;
+}
 
 interface RawCommunity extends Omit<Community, 'leader_id' | 'leader'> {
   leader_id: string;
-  community_members: { profile_id: string }[];
+  community_members: RawCommunityMember[];
   leader: { full_name: string; username: string } | null;
 }
 
@@ -26,16 +36,32 @@ export default async function CommunitiesDirectoryPage() {
     .from("communities")
     .select(`
       *,
-      community_members (profile_id),
+      community_members (
+        profile_id,
+        profiles:profiles!profile_id (
+          avatar_url,
+          full_name,
+          username
+        )
+      ),
       leader:profiles!leader_id (full_name, username)
     `)
     .order("created_at", { ascending: false });
 
   const communities = (rawCommunities as unknown as RawCommunity[] || []).map((comm) => {
+    const members = (comm.community_members || []).map((m) => {
+      const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+      return {
+        avatar_url: p?.avatar_url || null,
+        full_name: p?.full_name || null,
+        username: p?.username || null,
+      };
+    });
     return {
       ...comm,
       memberCount: comm.community_members?.length || 0,
       memberIds: comm.community_members?.map((m) => m.profile_id) || [],
+      members,
     };
   });
 
@@ -132,17 +158,23 @@ export default async function CommunitiesDirectoryPage() {
                 >
                   <div>
                     {/* Cover Image Strip */}
-                    <div className={`h-24 w-full bg-gradient-to-r ${getGradient(comm.name)}`} />
+                    {comm.cover_image_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={comm.cover_image_url}
+                        alt={comm.name}
+                        className="h-24 w-full object-cover"
+                      />
+                    ) : (
+                      <div className={`h-24 w-full bg-gradient-to-r ${getGradient(comm.name)}`} />
+                    )}
                     
                     <div className="p-6">
                       <h3 className="font-heading text-lg font-bold text-ink hover:underline">
                         <Link href={`/communities/${comm.slug}`}>{comm.name}</Link>
                       </h3>
-                      <div className="mt-2 flex items-center gap-2 text-xs text-muted">
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3.5 w-3.5" />
-                          {comm.memberCount} {comm.memberCount === 1 ? "member" : "members"}
-                        </span>
+                      <div className="mt-2.5">
+                        <AvatarStack members={comm.members} totalCount={comm.memberCount} />
                       </div>
                       {comm.description && (
                         <ExpandableText

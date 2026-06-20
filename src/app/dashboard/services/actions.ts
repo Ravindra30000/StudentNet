@@ -22,6 +22,7 @@ export async function createService(formData: FormData) {
   const category = String(formData.get("category") ?? "Web Development").trim();
   const price_inr = Number(formData.get("price_inr") ?? 0);
   const delivery_days = Number(formData.get("delivery_days") ?? 1);
+  const delivery_label = String(formData.get("delivery_label") ?? "").trim() || null;
 
   if (!title) {
     redirect("/dashboard/services/new?error=Title is required");
@@ -40,6 +41,7 @@ export async function createService(formData: FormData) {
     category,
     price_inr,
     delivery_days,
+    delivery_label,
     is_active: true,
   });
 
@@ -60,6 +62,7 @@ export async function updateService(formData: FormData) {
   const category = String(formData.get("category") ?? "Web Development").trim();
   const price_inr = Number(formData.get("price_inr") ?? 0);
   const delivery_days = Number(formData.get("delivery_days") ?? 1);
+  const delivery_label = String(formData.get("delivery_label") ?? "").trim() || null;
 
   if (!id) {
     redirect("/dashboard/services?error=Service ID is missing");
@@ -82,6 +85,7 @@ export async function updateService(formData: FormData) {
       category,
       price_inr,
       delivery_days,
+      delivery_label,
     })
     .eq("id", id)
     .eq("owner_id", user.id);
