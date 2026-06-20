@@ -194,27 +194,30 @@ export default function ProjectCard({
           </div>
 
           {techStack.length > 0 && (() => {
-            const categorized = parseAndCategorizeTechStack(techStack);
-            if (categorized.length === 0) return null;
+            const items = Array.from(new Set(
+              techStack
+                .flatMap(item => item.split(/[,\/;]+/))
+                .map(item => item.trim())
+                .filter(item => item.length > 0 && item.toLowerCase() !== "null")
+            ));
+            
+            if (items.length === 0) return null;
+            
             return (
-              <div className="mt-3 space-y-3 border-t border-border/20 pt-3">
-                {categorized.map((group) => (
-                  <div key={group.category} className="flex flex-col gap-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-accent-green">
-                      {group.category}
+              <div className="mt-3 border-t border-border/20 pt-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-accent-green block mb-1.5">
+                  Tech Stack
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {items.map((item) => (
+                    <span
+                      key={item}
+                      className="bg-surface-sunken text-muted px-2.5 py-1 rounded-full text-[11px] font-medium border border-border/10"
+                    >
+                      {item}
                     </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {group.items.map((item) => (
-                        <span
-                          key={item}
-                          className="bg-surface-sunken text-muted px-2.5 py-1 rounded-full text-[11px] font-medium border border-border/10"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             );
           })()}
