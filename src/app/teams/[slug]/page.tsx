@@ -158,18 +158,27 @@ export default async function TeamProfilePage({
                             {project.description}
                           </p>
                         )}
-                        {project.tech_stack && project.tech_stack.length > 0 && (
-                          <div className="mt-4 flex flex-wrap gap-1.5">
-                            {project.tech_stack.map((tech) => (
-                              <span
-                                key={tech}
-                                className="rounded-full bg-surface-sunken px-2.5 py-0.5 text-[10px] font-medium text-ink"
-                              >
-                                {tech}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {project.tech_stack && (() => {
+                          const items = Array.from(new Set(
+                            project.tech_stack
+                              .flatMap(item => item.split(/[,\/;]+/))
+                              .map(item => item.trim())
+                              .filter(item => item.length > 0 && item.toLowerCase() !== "null")
+                          ));
+                          if (items.length === 0) return null;
+                          return (
+                            <div className="mt-4 flex flex-wrap gap-1.5">
+                              {items.map((tech) => (
+                                <span
+                                  key={tech}
+                                  className="rounded-full bg-surface-sunken px-2.5 py-0.5 text-[10px] font-medium text-ink border border-border/10"
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       <div className="mt-6 flex items-center justify-between border-t border-border/40 pt-4">
