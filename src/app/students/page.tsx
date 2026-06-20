@@ -175,6 +175,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
         price_inr: s.price_inr,
         delivery_days: s.delivery_days,
         owner: {
+          id: s.owner?.id ?? "",
           username: s.owner?.username ?? "",
           full_name: s.owner?.full_name ?? "",
           avatar_url: s.owner?.avatar_url ?? null,
@@ -334,7 +335,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {services.map((service) => (
-                <ServiceCard key={service.id} service={service} />
+                <ServiceCard key={service.id} service={service} currentUserId={sessionUser?.id} />
               ))}
             </div>
           )

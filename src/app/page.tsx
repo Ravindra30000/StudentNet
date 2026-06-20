@@ -239,6 +239,7 @@ export default async function Home() {
       created_at,
       is_active,
       owner:profiles!owner_id (
+        id,
         username,
         full_name,
         avatar_url,
@@ -249,6 +250,7 @@ export default async function Home() {
     .eq("is_active", true);
 
   interface RawServiceOwner {
+    id: string;
     username: string;
     full_name: string;
     avatar_url: string | null;
@@ -284,6 +286,7 @@ export default async function Home() {
       created_at: s.created_at,
       score,
       owner: {
+        id: s.owner?.id ?? "",
         username: s.owner?.username ?? "",
         full_name: s.owner?.full_name ?? "",
         avatar_url: s.owner?.avatar_url ?? null,
@@ -312,6 +315,7 @@ export default async function Home() {
       created_at,
       is_active,
       owner:profiles!owner_id (
+        id,
         username,
         full_name,
         avatar_url,
@@ -365,6 +369,7 @@ export default async function Home() {
       delivery_days: s.delivery_days,
       trendScore,
       owner: {
+        id: s.owner?.id ?? "",
         username: s.owner?.username ?? "",
         full_name: s.owner?.full_name ?? "",
         avatar_url: s.owner?.avatar_url ?? null,
@@ -478,7 +483,7 @@ export default async function Home() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {featuredServices.map((service) => (
-                <ServiceCard key={service.id} service={service} />
+                <ServiceCard key={service.id} service={service} currentUserId={user?.id} />
               ))}
             </div>
           )}
@@ -507,6 +512,7 @@ export default async function Home() {
                   key={service.id}
                   service={service}
                   variant="compact"
+                  currentUserId={user?.id}
                 />
               ))}
             </div>

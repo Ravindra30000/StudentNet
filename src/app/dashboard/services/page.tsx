@@ -52,6 +52,7 @@ export default async function ServicesDashboardPage({
     : null;
 
   const serviceOwnerData = {
+    id: profile.id,
     username: profile.username,
     full_name: profile.full_name,
     avatar_url: profile.avatar_url,
@@ -161,6 +162,7 @@ export default async function ServicesDashboardPage({
                     key={service.id}
                     service={service}
                     isOwner={true}
+                    currentUserId={user.id}
                   />
                 ))}
               </div>

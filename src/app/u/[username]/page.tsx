@@ -89,6 +89,7 @@ export default async function ProfilePage({
     .filter(Boolean);
 
   const serviceOwnerData = {
+    id: profile.id,
     username: profile.username,
     full_name: profile.full_name,
     avatar_url: profile.avatar_url,
@@ -238,7 +239,7 @@ export default async function ProfilePage({
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             {servicesWithOwner.map((service: ServiceCardProps["service"]) => (
-              <ServiceCard key={service.id} service={service} />
+              <ServiceCard key={service.id} service={service} currentUserId={user?.id} />
             ))}
           </div>
         </div>

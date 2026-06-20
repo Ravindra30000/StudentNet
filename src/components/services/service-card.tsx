@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { Star, MessageSquare } from "lucide-react";
+import { startConversation } from "@/app/dashboard/messages/actions";
 
 export interface ServiceCardProps {
   service: {
@@ -11,6 +12,7 @@ export interface ServiceCardProps {
     delivery_days: number;
     delivery_label?: string | null;
     owner: {
+      id?: string;
       username: string;
       full_name: string;
       avatar_url: string | null;
@@ -22,6 +24,7 @@ export interface ServiceCardProps {
   variant?: "grid" | "compact";
   isOwner?: boolean;
   searchTerm?: string;
+  currentUserId?: string | null;
 }
 
 function HighlightMatch({ text, term }: { text: string; term?: string }) {
@@ -47,7 +50,12 @@ function HighlightMatch({ text, term }: { text: string; term?: string }) {
   );
 }
 
-export default function ServiceCard({ service, variant = "grid", searchTerm }: ServiceCardProps) {
+export default function ServiceCard({
+  service,
+  variant = "grid",
+  searchTerm,
+  currentUserId
+}: ServiceCardProps) {
   // Deterministic gradient classes based on category initials
   const initials = service.category
     .split(" ")
@@ -78,8 +86,9 @@ export default function ServiceCard({ service, variant = "grid", searchTerm }: S
 
   if (variant === "compact") {
     return (
-      <Link href={`/services/${service.id}`} className="block group">
-        <div className="h-[60px] flex items-center gap-3 bg-surface p-2 rounded-xl border border-border/30 hover:bg-surface-sunken hover:shadow-sm transition-all duration-200">
+      <div className="h-[60px] flex items-center justify-between gap-3 bg-surface p-2 rounded-xl border border-border/30 hover:bg-surface-sunken hover:shadow-sm transition-all duration-200 group/compact relative">
+        {/* Content Link */}
+        <Link href={`/services/${service.id}`} className="flex-1 min-w-0 flex items-center gap-3">
           {/* Avatar Left */}
           {service.owner.avatar_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -97,7 +106,7 @@ export default function ServiceCard({ service, variant = "grid", searchTerm }: S
           {/* Content Right */}
           <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
             <div className="flex justify-between items-start gap-2">
-              <h4 className="font-heading text-xs font-bold text-ink truncate group-hover:text-accent-green transition-colors">
+              <h4 className="font-heading text-xs font-bold text-ink truncate group-hover/compact:text-accent-green transition-colors">
                 <HighlightMatch text={service.title} term={searchTerm} />
               </h4>
               {service.owner.avg_rating ? (
@@ -119,18 +128,36 @@ export default function ServiceCard({ service, variant = "grid", searchTerm }: S
               </span>
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+
+        {/* Message Button on the right */}
+        {service.owner.id && currentUserId !== service.owner.id && (
+          <form
+            action={async () => {
+              "use server";
+              await startConversation(service.owner.id!);
+            }}
+            className="shrink-0 pl-1 relative z-10"
+          >
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full p-2 text-muted hover:text-white hover:bg-accent-green hover:shadow-sm border border-border/30 hover:border-accent-green transition-all duration-200 cursor-pointer bg-surface"
+              title={`Message ${service.owner.full_name}`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+            </button>
+          </form>
+        )}
+      </div>
     );
   }
 
   return (
-    <Link
-      href={`/services/${service.id}`}
+    <div
       className="group bg-surface rounded-[20px] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden border border-border/20 relative"
     >
-      {/* Cover Image/Gradient Area */}
-      <div className="relative z-0 aspect-[16/9] w-full overflow-hidden bg-surface-sunken">
+      {/* Cover Image/Gradient Area - wrapped in Link to detail page */}
+      <Link href={`/services/${service.id}`} className="block relative z-0 aspect-[16/9] w-full overflow-hidden bg-surface-sunken">
         <div className={`absolute inset-0 bg-gradient-to-br ${gradientClasses} flex items-center justify-center`}>
           <span className="font-heading font-extrabold text-white/20 text-5xl tracking-wider select-none">
             {initials}
@@ -141,37 +168,58 @@ export default function ServiceCard({ service, variant = "grid", searchTerm }: S
         <span className="absolute top-4 right-4 bg-ink text-white font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm max-w-[80%] truncate">
           {service.delivery_days}d delivery {service.delivery_label ? `(${service.delivery_label})` : ""}
         </span>
-      </div>
+      </Link>
 
       {/* Seller Header Row (Avatar overlap) */}
-      <div className="px-6 relative z-10 flex items-start gap-3">
-        <div className="-mt-5 shrink-0">
-          {service.owner.avatar_url ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={service.owner.avatar_url}
-              alt={service.owner.full_name}
-              className="w-10 h-10 rounded-full object-cover border-2 border-surface shadow-sm"
-            />
-          ) : (
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient} border-2 border-surface flex items-center justify-center text-white font-heading font-bold text-xs shadow-sm`}>
-              {sellerInitials}
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 pt-1">
-          <p className="font-sans text-sm font-bold text-ink truncate">
-            {service.owner.full_name}
-          </p>
-          <p className="font-sans text-[11px] text-muted truncate">
-            {service.owner.college || "StudentNet Builder"}
-          </p>
-        </div>
+      <div className="px-6 relative z-10 flex items-start justify-between gap-3">
+        <Link href={`/u/${service.owner.username}`} className="flex items-start gap-3 min-w-0 group/owner -mt-5">
+          <div className="shrink-0">
+            {service.owner.avatar_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={service.owner.avatar_url}
+                alt={service.owner.full_name}
+                className="w-10 h-10 rounded-full object-cover border-2 border-surface shadow-sm"
+              />
+            ) : (
+              <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient} border-2 border-surface flex items-center justify-center text-white font-heading font-bold text-xs shadow-sm`}>
+                {sellerInitials}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 pt-1">
+            <p className="font-sans text-sm font-bold text-ink truncate group-hover/owner:text-accent-green transition-colors">
+              {service.owner.full_name}
+            </p>
+            <p className="font-sans text-[11px] text-muted truncate">
+              {service.owner.college || "StudentNet Builder"}
+            </p>
+          </div>
+        </Link>
+
+        {/* Message Button on the right of the header row */}
+        {service.owner.id && currentUserId !== service.owner.id && (
+          <form
+            action={async () => {
+              "use server";
+              await startConversation(service.owner.id!);
+            }}
+            className="pt-1.5 shrink-0"
+          >
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-full p-2 text-muted hover:text-white hover:bg-accent-green hover:shadow-sm border border-border/30 hover:border-accent-green transition-all duration-200 cursor-pointer bg-surface"
+              title={`Message ${service.owner.full_name}`}
+            >
+              <MessageSquare className="w-4 h-4" />
+            </button>
+          </form>
+        )}
       </div>
 
       {/* Content Area */}
       <div className="px-6 pt-4 pb-6 flex-1 flex flex-col justify-between">
-        <div className="space-y-2">
+        <Link href={`/services/${service.id}`} className="block space-y-2 flex-1">
           <h3 className="font-heading text-base font-bold text-ink leading-snug line-clamp-2 group-hover:text-accent-green transition-colors">
             <HighlightMatch text={service.title} term={searchTerm} />
           </h3>
@@ -180,10 +228,10 @@ export default function ServiceCard({ service, variant = "grid", searchTerm }: S
           <span className="inline-block bg-surface-sunken text-muted text-xs font-semibold px-3 py-1 rounded-full border border-border/30">
             {service.category}
           </span>
-        </div>
+        </Link>
 
         {/* Footer Rating/Pricing Row */}
-        <div className="mt-5 pt-4 border-t border-border/40 flex items-center justify-between">
+        <Link href={`/services/${service.id}`} className="block mt-5 pt-4 border-t border-border/40 flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[10px] text-muted font-medium uppercase tracking-wider">Starting at</span>
             <span className="font-heading text-base font-extrabold text-ink">
@@ -208,8 +256,8 @@ export default function ServiceCard({ service, variant = "grid", searchTerm }: S
               </span>
             )}
           </div>
-        </div>
+        </Link>
       </div>
-    </Link>
+    </div>
   );
 }

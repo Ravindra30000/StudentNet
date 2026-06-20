@@ -48,6 +48,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   } = await searchParams;
 
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   // 1. Fetch active service counts by category
   const { data: categoryCounts } = await supabase
@@ -73,6 +74,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     created_at,
     is_active,
     owner:profiles!owner_id${seller ? "!inner" : ""} (
+      id,
       username,
       full_name,
       avatar_url,
@@ -121,6 +123,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   const { data: rawServices } = await queryBuilder;
 
   interface RawServiceOwner {
+    id: string;
     username: string;
     full_name: string;
     avatar_url: string | null;
@@ -157,6 +160,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       created_at: s.created_at,
       score,
       owner: {
+        id: s.owner?.id ?? "",
         username: s.owner?.username ?? "",
         full_name: s.owner?.full_name ?? "",
         avatar_url: s.owner?.avatar_url ?? null,
@@ -306,7 +310,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedServices.map((service) => (
-                <ServiceCard key={service.id} service={service} searchTerm={q} />
+                <ServiceCard key={service.id} service={service} searchTerm={q} currentUserId={user?.id} />
               ))}
             </div>
           )}
