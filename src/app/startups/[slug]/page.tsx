@@ -203,19 +203,21 @@ export default async function StartupDetailPage({
                 Startup Info
               </h3>
               <div className="flex flex-col gap-4 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted flex items-center gap-1.5"><Layers size={16} /> Industry</span>
-                  <span className="font-semibold text-ink">{startup.industry}</span>
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-muted flex items-center gap-1.5 shrink-0"><Layers size={16} /> Industry</span>
+                  <span className="font-semibold text-ink text-right break-words min-w-0">
+                    {startup.industry}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted flex items-center gap-1.5"><Calendar size={16} /> Founded</span>
-                  <span className="font-semibold text-ink">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted flex items-center gap-1.5 shrink-0"><Calendar size={16} /> Founded</span>
+                  <span className="font-semibold text-ink shrink-0">
                     {new Date(startup.created_at).getFullYear()}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted flex items-center gap-1.5"><Users size={16} /> Open Roles</span>
-                  <span className="font-semibold text-ink">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-muted flex items-center gap-1.5 shrink-0"><Users size={16} /> Open Roles</span>
+                  <span className="font-semibold text-ink shrink-0">
                     {startup.startup_roles ? startup.startup_roles.length : 0} positions
                   </span>
                 </div>
