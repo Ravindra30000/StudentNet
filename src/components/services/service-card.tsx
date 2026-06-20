@@ -119,20 +119,22 @@ export default function ServiceCard({ service, variant = "grid" }: ServiceCardPr
       </div>
 
       {/* Seller Header Row (Avatar overlap) */}
-      <div className="px-6 -mt-5 relative z-10 flex items-center gap-3">
-        {service.owner.avatar_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={service.owner.avatar_url}
-            alt={service.owner.full_name}
-            className="w-10 h-10 rounded-full object-cover border-2 border-surface shadow-sm"
-          />
-        ) : (
-          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient} border-2 border-surface flex items-center justify-center text-white font-heading font-bold text-xs shadow-sm`}>
-            {sellerInitials}
-          </div>
-        )}
-        <div className="min-w-0 pt-3">
+      <div className="px-6 relative z-10 flex items-start gap-3">
+        <div className="-mt-5 shrink-0">
+          {service.owner.avatar_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={service.owner.avatar_url}
+              alt={service.owner.full_name}
+              className="w-10 h-10 rounded-full object-cover border-2 border-surface shadow-sm"
+            />
+          ) : (
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient} border-2 border-surface flex items-center justify-center text-white font-heading font-bold text-xs shadow-sm`}>
+              {sellerInitials}
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 pt-1">
           <p className="font-sans text-sm font-bold text-ink truncate">
             {service.owner.full_name}
           </p>
