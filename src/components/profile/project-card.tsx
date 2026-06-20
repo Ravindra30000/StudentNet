@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ExternalLink, Play, ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -46,6 +46,18 @@ export default function ProjectCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+
+  useEffect(() => {
+    if (!showImageModal) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowImageModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showImageModal]);
 
   const shouldTruncate = description && description.length > 150;
 
@@ -70,7 +82,10 @@ export default function ProjectCard({
     <>
       <div className="flex flex-col bg-surface rounded-lg overflow-hidden shadow-card border border-border/40 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
         {/* Cover Image Container */}
-        <div className="relative h-48 w-full bg-accent-green/5 border-b border-border/40 group/cover">
+        <div 
+          onClick={() => allImages.length > 0 && setShowImageModal(true)}
+          className={`relative h-48 w-full bg-accent-green/5 border-b border-border/40 group/cover overflow-hidden ${allImages.length > 0 ? "cursor-zoom-in" : ""}`}
+        >
           {/* Video Play Badge overlay */}
           {videoUrl && (
             <button
@@ -88,12 +103,21 @@ export default function ProjectCard({
           )}
 
           {allImages.length > 0 ? (
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full overflow-hidden">
+              {/* Soft blurred background layer to prevent raw side-bars */}
+              <Image
+                src={allImages[currentImageIndex]}
+                alt=""
+                fill
+                className="object-cover blur-lg opacity-25 scale-[1.08] pointer-events-none"
+                unoptimized
+              />
+              {/* Centered contained front layer showing full screenshot */}
               <Image
                 src={allImages[currentImageIndex]}
                 alt={`Image for ${title}`}
                 fill
-                className="object-cover"
+                className="object-contain p-2.5 transition-transform duration-300 group-hover/cover:scale-[1.02]"
                 unoptimized
               />
 
@@ -245,6 +269,66 @@ export default function ProjectCard({
               autoPlay
               className="w-full max-h-[80vh] object-contain"
             />
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Image Lightbox Modal Overlay */}
+      {showImageModal && allImages.length > 0 && (
+        <div 
+          onClick={() => setShowImageModal(false)}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-md p-4 cursor-zoom-out select-none"
+        >
+          {/* Header controls */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+            <span className="text-white/60 text-xs font-semibold bg-black/45 px-3 py-1.5 rounded-full backdrop-blur-sm">
+              {currentImageIndex + 1} / {allImages.length}
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowImageModal(false);
+              }}
+              className="p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-md active:scale-95 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Main Image Container */}
+          <div 
+            className="relative flex items-center justify-center w-full max-w-5xl h-[80vh]" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={allImages[currentImageIndex]}
+              alt={title}
+              width={1600}
+              height={1200}
+              className="max-h-[80vh] max-w-[90vw] md:max-w-[80vw] object-contain rounded-lg select-none cursor-default"
+              unoptimized
+            />
+
+            {/* Carousel Navigation Arrows */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  className="absolute left-2 md:left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg active:scale-95 cursor-pointer"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  className="absolute right-2 md:right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg active:scale-95 cursor-pointer"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
