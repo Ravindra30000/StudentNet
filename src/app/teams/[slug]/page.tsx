@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { splitLongTechTags } from "@/components/profile/project-card";
 import {
   Users,
   Building,
@@ -159,12 +160,11 @@ export default async function TeamProfilePage({
                           </p>
                         )}
                         {project.tech_stack && (() => {
-                          const items = Array.from(new Set(
-                            project.tech_stack
-                              .flatMap(item => item.split(/[,\/;]+/))
-                              .map(item => item.trim())
-                              .filter(item => item.length > 0 && item.toLowerCase() !== "null")
-                          ));
+                          const rawItems = project.tech_stack
+                            .flatMap(item => item.split(/[,\/;]+/))
+                            .map(item => item.trim())
+                            .filter(item => item.length > 0 && item.toLowerCase() !== "null");
+                          const items = Array.from(new Set(splitLongTechTags(rawItems)));
                           if (items.length === 0) return null;
                           return (
                             <div className="mt-4 flex flex-wrap gap-1.5">

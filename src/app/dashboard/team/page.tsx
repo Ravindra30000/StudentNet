@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { splitLongTechTags } from "@/components/profile/project-card";
 import {
   createTeam,
   addTeamMember,
@@ -253,12 +254,11 @@ export default async function TeamDashboardPage({
                         <div>
                           <p className="text-sm font-semibold text-ink">{proj.title}</p>
                           {proj.tech_stack && (() => {
-                            const items = Array.from(new Set(
-                              proj.tech_stack
-                                .flatMap(item => item.split(/[,\/;]+/))
-                                .map(item => item.trim())
-                                .filter(item => item.length > 0 && item.toLowerCase() !== "null")
-                            ));
+                            const rawItems = proj.tech_stack
+                              .flatMap(item => item.split(/[,\/;]+/))
+                              .map(item => item.trim())
+                              .filter(item => item.length > 0 && item.toLowerCase() !== "null");
+                            const items = Array.from(new Set(splitLongTechTags(rawItems)));
                             if (items.length === 0) return null;
                             return (
                               <div className="flex flex-wrap gap-1 mt-1">
