@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { splitLongTechTags } from "@/components/profile/project-card";
+import { splitLongTechTags } from "@/lib/tech-stack";
 import {
   Users,
   Building,
