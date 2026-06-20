@@ -17,6 +17,7 @@ export default function AvatarUploadField({ defaultValue }: AvatarUploadFieldPro
   // Temporary states for cropper modal
   const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
   const [tempFileName, setTempFileName] = useState<string>("");
+  const [tempFile, setTempFile] = useState<File | null>(null);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,6 +37,7 @@ export default function AvatarUploadField({ defaultValue }: AvatarUploadFieldPro
 
     setTempImageSrc(URL.createObjectURL(file));
     setTempFileName(file.name);
+    setTempFile(file);
   };
 
   const uploadAvatar = async (file: File) => {
@@ -141,14 +143,19 @@ export default function AvatarUploadField({ defaultValue }: AvatarUploadFieldPro
       {tempImageSrc && (
         <ImageCropperModal
           imageSrc={tempImageSrc}
+          originalBlob={tempFile ?? undefined}
           onCancel={() => {
             setTempImageSrc(null);
             setTempFileName("");
+            setTempFile(null);
           }}
           onConfirm={async (croppedBlob) => {
-            const fileToUpload = new File([croppedBlob], tempFileName, { type: "image/jpeg" });
+            const fileToUpload = croppedBlob instanceof File 
+              ? croppedBlob 
+              : new File([croppedBlob], tempFileName, { type: "image/jpeg" });
             setTempImageSrc(null);
             setTempFileName("");
+            setTempFile(null);
             await uploadAvatar(fileToUpload);
           }}
         />

@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 
 interface ImageCropperModalProps {
   imageSrc: string;
+  originalBlob?: Blob;
   onConfirm: (croppedBlob: Blob) => void;
   onCancel: () => void;
   aspectRatio?: "1:1" | "16:9";
@@ -11,6 +12,7 @@ interface ImageCropperModalProps {
 
 export default function ImageCropperModal({
   imageSrc,
+  originalBlob,
   onConfirm,
   onCancel,
   aspectRatio = "1:1",
@@ -165,6 +167,10 @@ export default function ImageCropperModal({
   };
 
   const handleUseOriginal = async () => {
+    if (originalBlob) {
+      onConfirm(originalBlob);
+      return;
+    }
     try {
       const response = await fetch(imageSrc);
       const blob = await response.blob();

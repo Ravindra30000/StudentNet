@@ -92,12 +92,14 @@ export default function ProjectImagesUpload({ defaultValues }: ProjectImagesUplo
       const fileName = `gallery-${Math.random().toString(36).substring(2)}-${Date.now()}.jpg`;
       const filePath = `projects/${fileName}`;
 
-      // Convert cropped blob to a File object
-      const croppedFile = new File(
-        [croppedBlob],
-        `cropped-${currentItem.file.name.split(".")[0]}.jpg`,
-        { type: "image/jpeg" }
-      );
+      // Use original file if Use Original was selected, otherwise convert cropped blob to a File object
+      const croppedFile = croppedBlob instanceof File 
+        ? croppedBlob 
+        : new File(
+            [croppedBlob],
+            `cropped-${currentItem.file.name.split(".")[0]}.jpg`,
+            { type: "image/jpeg" }
+          );
 
       // Upload cropped file
       const { error: uploadError } = await supabase.storage
@@ -215,11 +217,11 @@ export default function ProjectImagesUpload({ defaultValues }: ProjectImagesUplo
         </p>
       )}
 
-      {/* Sequential Cropping Modal for Gallery Images */}
       {cropQueue.length > 0 && (
         <ImageCropperModal
           key={cropQueue[0].src}
           imageSrc={cropQueue[0].src}
+          originalBlob={cropQueue[0].file}
           aspectRatio="16:9"
           onCancel={handleCropCancel}
           onConfirm={handleCropComplete}

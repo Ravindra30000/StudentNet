@@ -17,6 +17,7 @@ export default function ProjectCoverUpload({ defaultValue }: ProjectCoverUploadP
   // Temporary states for cropper modal
   const [tempImageSrc, setTempImageSrc] = useState<string | null>(null);
   const [tempFileName, setTempFileName] = useState<string>("");
+  const [tempFile, setTempFile] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -36,6 +37,7 @@ export default function ProjectCoverUpload({ defaultValue }: ProjectCoverUploadP
 
     setTempImageSrc(URL.createObjectURL(file));
     setTempFileName(file.name);
+    setTempFile(file);
   };
 
   const uploadCover = async (file: File) => {
@@ -160,15 +162,21 @@ export default function ProjectCoverUpload({ defaultValue }: ProjectCoverUploadP
       {tempImageSrc && (
         <ImageCropperModal
           imageSrc={tempImageSrc}
+          originalBlob={tempFile ?? undefined}
           aspectRatio="16:9"
           onCancel={() => {
             setTempImageSrc(null);
             setTempFileName("");
+            setTempFile(null);
           }}
           onConfirm={async (croppedBlob) => {
-            const fileToUpload = new File([croppedBlob], tempFileName, { type: "image/jpeg" });
+            // Check if the confirmed blob is already a File object (meaning Use Original was selected)
+            const fileToUpload = croppedBlob instanceof File 
+              ? croppedBlob 
+              : new File([croppedBlob], tempFileName, { type: "image/jpeg" });
             setTempImageSrc(null);
             setTempFileName("");
+            setTempFile(null);
             await uploadCover(fileToUpload);
           }}
         />
