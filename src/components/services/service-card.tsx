@@ -1,126 +1,188 @@
-"use client";
-
-import { useTransition } from "react";
 import Link from "next/link";
-import { Service, Profile } from "@/lib/types";
-import { toggleServiceActive, deleteService } from "@/app/dashboard/services/actions";
-import { Edit2, Play, Pause, Trash2 } from "lucide-react";
+import { Star } from "lucide-react";
 
-interface ServiceCardProps {
-  service: Service & { profiles?: Profile | null };
-  isOwner: boolean;
+export interface ServiceCardProps {
+  service: {
+    id: string;
+    title: string;
+    description?: string | null;
+    category: string;
+    price_inr: number;
+    delivery_days: number;
+    owner: {
+      username: string;
+      full_name: string;
+      avatar_url: string | null;
+      college: string | null;
+      avg_rating: number | null;
+      review_count: number;
+    };
+  };
+  variant?: "grid" | "compact";
+  isOwner?: boolean;
 }
 
-export default function ServiceCard({ service, isOwner }: ServiceCardProps) {
-  const [isPending, startTransition] = useTransition();
+export default function ServiceCard({ service, variant = "grid" }: ServiceCardProps) {
+  // Deterministic gradient classes based on category initials
+  const initials = service.category
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
-  const handleToggle = () => {
-    startTransition(async () => {
-      try {
-        await toggleServiceActive(service.id, service.is_active);
-      } catch {
-        alert("Failed to update service status.");
-      }
-    });
-  };
+  const colors = [
+    "from-accent-green to-ink",
+    "from-ink to-muted",
+    "from-accent-green to-muted",
+    "from-muted to-accent-green",
+  ];
+  const charCodeSum = service.category
+    .split("")
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const gradientClasses = colors[Math.abs(charCodeSum) % colors.length];
 
-  const categoryColors: Record<string, string> = {
-    "Web Development": "bg-accent-green/10 text-accent-green",
-    "App Development": "bg-success/10 text-success",
-    "Design": "bg-amber-100 text-amber-800",
-    "Content": "bg-blue-100 text-blue-800",
-    "Marketing": "bg-purple-100 text-purple-800",
-    "AI/ML": "bg-rose-100 text-rose-800",
-    "Business": "bg-indigo-100 text-indigo-800",
-  };
+  const sellerInitials = service.owner.full_name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
-  const categoryColor = categoryColors[service.category] || "bg-surface-sunken text-muted";
+  const avatarGradient = colors[Math.abs(service.owner.full_name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)) % colors.length];
+
+  if (variant === "compact") {
+    return (
+      <Link href={`/services/${service.id}`} className="block group">
+        <div className="h-[60px] flex items-center gap-3 bg-surface p-2 rounded-xl border border-border/30 hover:bg-surface-sunken hover:shadow-sm transition-all duration-200">
+          {/* Avatar Left */}
+          {service.owner.avatar_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={service.owner.avatar_url}
+              alt={service.owner.full_name}
+              className="w-10 h-10 rounded-full object-cover border border-border/50 shrink-0"
+            />
+          ) : (
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient} flex items-center justify-center text-white font-bold text-xs shrink-0`}>
+              {sellerInitials}
+            </div>
+          )}
+          
+          {/* Content Right */}
+          <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
+            <div className="flex justify-between items-start gap-2">
+              <h4 className="font-heading text-xs font-bold text-ink truncate group-hover:text-accent-green transition-colors">
+                {service.title}
+              </h4>
+              {service.owner.avg_rating ? (
+                <div className="flex items-center gap-0.5 text-accent-gold shrink-0">
+                  <Star className="w-3 h-3 fill-current" />
+                  <span className="text-[11px] font-bold">{Number(service.owner.avg_rating).toFixed(1)}</span>
+                </div>
+              ) : (
+                <span className="text-[10px] bg-surface-sunken text-muted px-1.5 py-0.5 rounded-full shrink-0 font-medium">New</span>
+              )}
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] text-muted truncate">
+                {service.category}
+              </span>
+              <span className="text-xs font-bold text-ink shrink-0">
+                From ₹{service.price_inr.toLocaleString("en-IN")}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   return (
-    <article className="glass-card p-6 md:p-8 flex flex-col gap-4 bg-surface rounded-xl shadow-card relative hover:shadow-card-hover transition-all duration-300">
-      <div className="flex justify-between items-start">
-        <span className={`font-label-sm text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider ${categoryColor}`}>
-          {service.category}
+    <Link
+      href={`/services/${service.id}`}
+      className="group bg-surface rounded-[20px] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden border border-border/20"
+    >
+      {/* Cover Image/Gradient Area */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-surface-sunken">
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClasses} flex items-center justify-center`}>
+          <span className="font-heading font-extrabold text-white/20 text-5xl tracking-wider select-none">
+            {initials}
+          </span>
+        </div>
+        
+        {/* Delivery Days Badge (Top Right) */}
+        <span className="absolute top-4 right-4 bg-ink text-white font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
+          {service.delivery_days}d delivery
         </span>
-        <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${service.is_active ? 'bg-success/10 text-success' : 'bg-muted/10 text-muted'}`}>
-          <div className={`w-2 h-2 rounded-full ${service.is_active ? 'bg-success' : 'bg-muted'}`}></div>
-          <span className="font-label-sm text-xs font-semibold">{service.is_active ? 'Active' : 'Paused'}</span>
+      </div>
+
+      {/* Seller Header Row (Avatar overlap) */}
+      <div className="px-6 -mt-5 relative z-10 flex items-center gap-3">
+        {service.owner.avatar_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={service.owner.avatar_url}
+            alt={service.owner.full_name}
+            className="w-10 h-10 rounded-full object-cover border-2 border-surface shadow-sm"
+          />
+        ) : (
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avatarGradient} border-2 border-surface flex items-center justify-center text-white font-heading font-bold text-xs shadow-sm`}>
+            {sellerInitials}
+          </div>
+        )}
+        <div className="min-w-0 pt-3">
+          <p className="font-sans text-sm font-bold text-ink truncate">
+            {service.owner.full_name}
+          </p>
+          <p className="font-sans text-[11px] text-muted truncate">
+            {service.owner.college || "StudentNet Builder"}
+          </p>
         </div>
       </div>
 
-      <div>
-        <h4 className="font-heading text-lg font-bold text-ink leading-tight mb-2">
-          {service.title}
-        </h4>
-        <p className="font-sans text-sm text-muted line-clamp-3">
-          {service.description || "No description provided."}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-4 mt-2 py-4 border-y border-border/50">
-        <div>
-          <p className="font-sans text-xs text-muted">Starting at</p>
-          <p className="font-heading text-lg font-bold text-ink">₹{service.price_inr.toLocaleString()}</p>
+      {/* Content Area */}
+      <div className="px-6 pt-4 pb-6 flex-1 flex flex-col justify-between">
+        <div className="space-y-2">
+          <h3 className="font-heading text-base font-bold text-ink leading-snug line-clamp-2 group-hover:text-accent-green transition-colors">
+            {service.title}
+          </h3>
+          
+          {/* Category Chip */}
+          <span className="inline-block bg-surface-sunken text-muted text-xs font-semibold px-3 py-1 rounded-full border border-border/30">
+            {service.category}
+          </span>
         </div>
-        <div className="h-8 w-px bg-border/50"></div>
-        <div>
-          <p className="font-sans text-xs text-muted">Delivery</p>
-          <p className="font-sans text-sm font-semibold text-ink">{service.delivery_days} {service.delivery_days === 1 ? 'day' : 'days'}</p>
-        </div>
-      </div>
 
-      {isOwner ? (
-        <div className="flex gap-3 mt-auto pt-2">
-          <Link
-            href={`/dashboard/services/${service.id}/edit`}
-            className="flex-1 text-center bg-surface border border-border text-ink font-semibold text-xs py-2.5 rounded-full hover:bg-surface-sunken transition-colors flex items-center justify-center gap-1.5"
-          >
-            <Edit2 size={14} /> Edit
-          </Link>
-          <button
-            onClick={handleToggle}
-            disabled={isPending}
-            className="flex-1 bg-surface border border-border text-ink font-semibold text-xs py-2.5 rounded-full hover:bg-surface-sunken transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
-          >
-            {service.is_active ? (
-              <>
-                <Pause size={14} /> Pause
-              </>
+        {/* Footer Rating/Pricing Row */}
+        <div className="mt-5 pt-4 border-t border-border/40 flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-muted font-medium uppercase tracking-wider">Starting at</span>
+            <span className="font-heading text-base font-extrabold text-ink">
+              ₹{service.price_inr.toLocaleString("en-IN")}
+            </span>
+          </div>
+
+          <div className="flex items-center">
+            {service.owner.avg_rating ? (
+              <div className="flex items-center gap-1">
+                <Star className="text-accent-gold w-4 h-4 fill-accent-gold" />
+                <span className="font-heading text-sm font-bold text-ink">
+                  {Number(service.owner.avg_rating).toFixed(1)}
+                </span>
+                <span className="text-xs text-muted font-normal">
+                  ({service.owner.review_count})
+                </span>
+              </div>
             ) : (
-              <>
-                <Play size={14} /> Activate
-              </>
+              <span className="text-[11px] bg-accent-green/10 text-accent-green font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                New
+              </span>
             )}
-          </button>
-          <form
-            action={deleteService}
-            onSubmit={(e) => {
-              if (!confirm("Are you sure you want to delete this service?")) {
-                e.preventDefault();
-              }
-            }}
-            className="flex"
-          >
-            <input type="hidden" name="id" value={service.id} />
-            <button
-              type="submit"
-              className="p-2.5 rounded-full border border-border text-danger hover:bg-danger/10 hover:border-danger/30 transition-colors"
-              title="Delete Service"
-            >
-              <Trash2 size={14} />
-            </button>
-          </form>
+          </div>
         </div>
-      ) : (
-        <div className="flex gap-3 mt-auto pt-2">
-          <Link
-            href={`/services/${service.id}`}
-            className="flex-1 text-center bg-ink text-white font-semibold text-xs py-2.5 rounded-full hover:opacity-90 transition-opacity"
-          >
-            View Details
-          </Link>
-        </div>
-      )}
-    </article>
+      </div>
+    </Link>
   );
 }

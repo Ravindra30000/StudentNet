@@ -43,6 +43,12 @@ export default async function Navbar() {
             Talent
           </Link>
           <Link
+            href="/services"
+            className="text-sm font-medium text-muted hover:text-ink transition-colors"
+          >
+            Services
+          </Link>
+          <Link
             href="/startups"
             className="text-sm font-medium text-muted hover:text-ink transition-colors"
           >

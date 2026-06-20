@@ -28,9 +28,10 @@ export interface ProfileCardData {
       category: string | null;
     } | null;
   }[];
-  services?: { id: string; is_active: boolean }[];
+  services?: { id: string; is_active: boolean; price_inr?: number }[];
   startups?: { id: string }[];
   reviews?: { overall: number }[];
+  min_service_price?: number | null;
 }
 
 interface ProfileCardProps {
@@ -156,16 +157,21 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
         )}
 
         {/* Rating and Availability */}
-        {(rating !== null || isAvailable) && (
+        {(rating !== null || isAvailable || (profile.min_service_price !== undefined && profile.min_service_price !== null)) && (
           <div className="flex items-center justify-between pt-4 border-t border-border/50">
-            {rating !== null ? (
-              <div className="flex items-center gap-1">
-                <Star className="text-accent-gold w-4 h-4 fill-accent-gold" />
-                <span className="font-heading text-sm font-bold text-ink">{rating} ({ratings.length})</span>
-              </div>
-            ) : (
-              <div />
-            )}
+            <div className="flex items-center gap-3">
+              {rating !== null && (
+                <div className="flex items-center gap-1">
+                  <Star className="text-accent-gold w-4 h-4 fill-accent-gold" />
+                  <span className="font-heading text-sm font-bold text-ink">{rating} ({ratings.length})</span>
+                </div>
+              )}
+              {profile.min_service_price !== undefined && profile.min_service_price !== null && (
+                <div className="text-[11px] font-bold text-accent-green bg-accent-green/5 px-2 py-0.5 rounded-md border border-accent-green/10">
+                  From ₹{profile.min_service_price.toLocaleString()}
+                </div>
+              )}
+            </div>
             {isAvailable && (
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">

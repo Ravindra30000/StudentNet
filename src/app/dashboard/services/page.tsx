@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import ServiceCard from "@/components/services/service-card";
+import ServiceCard, { ServiceCardProps } from "@/components/services/service-card";
 import OrderRow from "@/components/services/order-row";
 import { Plus, ShoppingBag } from "lucide-react";
-import type { Service, Order } from "@/lib/types";
+import type { Order } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +40,30 @@ export default async function ServicesDashboardPage({
     .select("*")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
+
+  const { data: profileReviews } = await supabase
+    .from("reviews")
+    .select("overall")
+    .eq("reviewee_id", user.id);
+
+  const ratings = profileReviews?.map((r) => Number(r.overall)) || [];
+  const avgRating = ratings.length > 0
+    ? ratings.reduce((sum, val) => sum + val, 0) / ratings.length
+    : null;
+
+  const serviceOwnerData = {
+    username: profile.username,
+    full_name: profile.full_name,
+    avatar_url: profile.avatar_url,
+    college: profile.college,
+    avg_rating: avgRating,
+    review_count: ratings.length,
+  };
+
+  const servicesWithOwner = (myServices ?? []).map((s) => ({
+    ...s,
+    owner: serviceOwnerData,
+  }));
 
   // Fetch orders as seller (disambiguating using buyer_id relationship name)
   const { data: ordersAsSeller } = await supabase
@@ -130,9 +154,9 @@ export default async function ServicesDashboardPage({
             <h2 className="font-heading text-xl font-bold text-ink mb-6">
               Active Offerings
             </h2>
-            {myServices && myServices.length > 0 ? (
+            {servicesWithOwner && servicesWithOwner.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {myServices.map((service: Service) => (
+                {servicesWithOwner.map((service: ServiceCardProps["service"]) => (
                   <ServiceCard
                     key={service.id}
                     service={service}

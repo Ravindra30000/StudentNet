@@ -114,6 +114,12 @@ export default function NavbarMobile({
                   Talent
                 </Link>
                 <Link
+                  href="/services"
+                  className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:text-accent-gold transition-colors"
+                >
+                  Services
+                </Link>
+                <Link
                   href="/startups"
                   className="flex items-center justify-center rounded-xl bg-white/5 border border-white/10 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:text-accent-gold transition-colors"
                 >

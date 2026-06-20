@@ -8,7 +8,19 @@ interface SearchFiltersProps {
   skills: string[];
   colleges: string[];
   gradYears: string[];
+  mode?: "talent" | "services";
 }
+
+const CATEGORIES = [
+  "Web Development",
+  "App Design",
+  "AI/ML",
+  "Video Editing",
+  "Content Writing",
+  "UI/UX Design",
+  "Digital Marketing",
+  "Blockchain",
+];
 
 const ROLE_LABELS: Record<string, string> = {
   student: "Student",
@@ -21,6 +33,7 @@ export default function SearchFilters({
   skills,
   colleges,
   gradYears,
+  mode = "talent",
 }: SearchFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -74,7 +87,12 @@ export default function SearchFilters({
 
   const handleClearFilters = () => {
     startTransition(() => {
-      router.push(pathname);
+      const modeParam = searchParams.get("mode");
+      if (modeParam) {
+        router.push(`${pathname}?mode=${modeParam}`);
+      } else {
+        router.push(pathname);
+      }
     });
   };
 
@@ -82,13 +100,15 @@ export default function SearchFilters({
   const currentCollege = searchParams.get("college") ?? "";
   const currentRole = searchParams.get("role") ?? "";
   const currentGradYear = searchParams.get("grad_year") ?? "";
+  const currentCategory = searchParams.get("category") ?? "";
 
-  const hasActiveFilters =
-    searchParams.get("q") ||
-    currentSkill ||
-    currentCollege ||
-    currentRole ||
-    currentGradYear;
+  const hasActiveFilters = mode === "services"
+    ? !!(searchParams.get("q") || currentCategory)
+    : !!(searchParams.get("q") ||
+      currentSkill ||
+      currentCollege ||
+      currentRole ||
+      currentGradYear);
 
   return (
     <div className="w-full flex flex-col gap-6 items-center md:items-start">
@@ -103,7 +123,7 @@ export default function SearchFilters({
           name="q"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Try 'React', 'IIT Bombay' or 'Ishaan'"
+          placeholder={mode === "services" ? "Search services..." : "Try 'React', 'IIT Bombay' or 'Ishaan'"}
           className="w-full pl-16 pr-24 py-4 rounded-full border border-border bg-surface font-sans text-base text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent-green/20 focus:border-accent-green transition-all shadow-inner"
         />
         <button
@@ -116,73 +136,94 @@ export default function SearchFilters({
 
       {/* Select Dropdown Filters Row */}
       <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start w-full">
-        {/* Skill Filter */}
-        <div className="relative">
-          <select
-            value={currentSkill}
-            onChange={(e) => applyFilters({ skill: e.target.value })}
-            className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-          >
-            <option value="">Skill</option>
-            {skills.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
-        </div>
+        {mode === "services" ? (
+          /* Category Filter */
+          <div className="relative">
+            <select
+              value={currentCategory}
+              onChange={(e) => applyFilters({ category: e.target.value })}
+              className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
+            >
+              <option value="">Category</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+          </div>
+        ) : (
+          <>
+            {/* Skill Filter */}
+            <div className="relative">
+              <select
+                value={currentSkill}
+                onChange={(e) => applyFilters({ skill: e.target.value })}
+                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
+              >
+                <option value="">Skill</option>
+                {skills.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+            </div>
 
-        {/* College Filter */}
-        <div className="relative">
-          <select
-            value={currentCollege}
-            onChange={(e) => applyFilters({ college: e.target.value })}
-            className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-          >
-            <option value="">College</option>
-            {colleges.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
-        </div>
+            {/* College Filter */}
+            <div className="relative">
+              <select
+                value={currentCollege}
+                onChange={(e) => applyFilters({ college: e.target.value })}
+                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
+              >
+                <option value="">College</option>
+                {colleges.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+            </div>
 
-        {/* Role Filter */}
-        <div className="relative">
-          <select
-            value={currentRole}
-            onChange={(e) => applyFilters({ role: e.target.value })}
-            className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-          >
-            <option value="">Role</option>
-            {Object.entries(ROLE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
-        </div>
+            {/* Role Filter */}
+            <div className="relative">
+              <select
+                value={currentRole}
+                onChange={(e) => applyFilters({ role: e.target.value })}
+                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
+              >
+                <option value="">Role</option>
+                {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+            </div>
 
-        {/* Graduation Year Filter */}
-        <div className="relative">
-          <select
-            value={currentGradYear}
-            onChange={(e) => applyFilters({ grad_year: e.target.value })}
-            className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-          >
-            <option value="">Graduation Year</option>
-            {gradYears.map((y) => (
-              <option key={y} value={y}>
-                Class of {y}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
-        </div>
+            {/* Graduation Year Filter */}
+            <div className="relative">
+              <select
+                value={currentGradYear}
+                onChange={(e) => applyFilters({ grad_year: e.target.value })}
+                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
+              >
+                <option value="">Graduation Year</option>
+                {gradYears.map((y) => (
+                  <option key={y} value={y}>
+                    Class of {y}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+            </div>
+          </>
+        )}
 
         {/* Clear Filters Button */}
         {hasActiveFilters && (
