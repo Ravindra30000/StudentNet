@@ -8,6 +8,7 @@ import AvatarUploadField from "@/components/profile/avatar-upload-field";
 import ProjectCard from "@/components/profile/project-card";
 import DeleteProjectForm from "@/components/profile/delete-project-form";
 import SkillsField from "@/components/profile/skills-field";
+import { Combobox } from "@/components/ui/combobox";
 import {
   LayoutDashboard,
   User,
@@ -80,6 +81,27 @@ export default async function DashboardPage({
       .neq("founder_id", user.id)
       .limit(50),
   ]);
+
+  // Fetch and deduplicate colleges for autocomplete
+  const { data: allProfilesForColleges } = await supabase
+    .from("profiles")
+    .select("college");
+  const dashCollegeFreqMap: Record<string, { original: string; count: number }> = {};
+  (allProfilesForColleges ?? []).forEach((p) => {
+    if (!p.college) return;
+    const trimmed = p.college.trim();
+    if (!trimmed) return;
+    const lower = trimmed.toLowerCase();
+    if (dashCollegeFreqMap[lower]) {
+      dashCollegeFreqMap[lower].count++;
+    } else {
+      dashCollegeFreqMap[lower] = { original: trimmed, count: 1 };
+    }
+  });
+  const sortedDashColleges = Object.values(dashCollegeFreqMap).sort((a, b) => b.count - a.count);
+  const dashAllColleges = sortedDashColleges.map((c) => c.original);
+  const dashPopularColleges = sortedDashColleges.slice(0, 5).map((c) => c.original);
+
 
   interface RecommendedStudent {
     id: string;
@@ -637,22 +659,29 @@ export default async function DashboardPage({
             </div>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-              <Field label="College" name="college" defaultValue={profile.college ?? ""} />
+              <div className="flex flex-col gap-2">
+                <label htmlFor="college" className="text-sm font-medium text-ink">College</label>
+                <Combobox
+                  name="college"
+                  value={profile.college ?? ""}
+                  options={dashAllColleges}
+                  popularOptions={dashPopularColleges}
+                  historyKey="dashboard_recent_colleges"
+                  placeholder="e.g. IIT Bombay"
+                  freeForm={true}
+                />
+              </div>
               <Field label="Branch" name="branch" defaultValue={profile.branch ?? ""} />
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-medium text-ink">Graduation year</label>
-                <select
+                <Combobox
                   name="graduation_year"
-                  defaultValue={profile.graduation_year ?? ""}
-                  className="rounded-xl border border-border bg-surface px-4 py-3 text-base outline-none focus:border-accent text-ink"
-                >
-                  <option value="">Select</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
+                  value={profile.graduation_year?.toString() ?? ""}
+                  options={years.map(String)}
+                  historyKey="dashboard_recent_grad_years"
+                  placeholder="Select year"
+                  freeForm={false}
+                />
               </div>
             </div>
 

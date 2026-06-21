@@ -195,16 +195,55 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
   
   const allSkills = Array.from(new Set((skillsData ?? []).map((s) => s.name)));
 
-  // 3. Compute distinct colleges and graduation years from the database profiles list
-  const allColleges = Array.from(
-    new Set(profiles.map((p) => p.college).filter(Boolean) as string[])
-  ).sort();
+  // Compute skill popularity based on profile skills usage count
+  const skillFrequencies: Record<string, number> = {};
+  profiles.forEach((p) => {
+    p.profile_skills?.forEach((ps) => {
+      const name = ps.skills?.name;
+      if (!name) return;
+      skillFrequencies[name] = (skillFrequencies[name] || 0) + 1;
+    });
+  });
+  const popularSkills = Object.entries(skillFrequencies)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name]) => name);
 
-  const allGradYears = Array.from(
-    new Set(
-      profiles.map((p) => p.graduation_year?.toString()).filter(Boolean) as string[]
-    )
-  ).sort();
+  // 3. Compute distinct colleges, deduplicating case/space variations and sorting by popularity
+  const collegeFrequencies: Record<string, { original: string; count: number }> = {};
+  profiles.forEach((p) => {
+    if (!p.college) return;
+    const trimmed = p.college.trim();
+    if (!trimmed) return;
+    const lower = trimmed.toLowerCase();
+    if (collegeFrequencies[lower]) {
+      collegeFrequencies[lower].count++;
+      // standardizing: prefer the casing with the highest frequency, or with more uppercase letters if they are equal
+      if (trimmed !== trimmed.toLowerCase() && collegeFrequencies[lower].original === collegeFrequencies[lower].original.toLowerCase()) {
+        collegeFrequencies[lower].original = trimmed;
+      }
+    } else {
+      collegeFrequencies[lower] = { original: trimmed, count: 1 };
+    }
+  });
+
+  const sortedCollegeGroups = Object.values(collegeFrequencies).sort((a, b) => b.count - a.count);
+  const allColleges = sortedCollegeGroups.map((group) => group.original);
+  const popularColleges = sortedCollegeGroups.slice(0, 5).map((group) => group.original);
+
+  // Compute distinct graduation years and popular graduation years
+  const gradYearFrequencies: Record<string, number> = {};
+  profiles.forEach((p) => {
+    if (!p.graduation_year) return;
+    const yStr = p.graduation_year.toString();
+    gradYearFrequencies[yStr] = (gradYearFrequencies[yStr] || 0) + 1;
+  });
+
+  const allGradYears = Object.keys(gradYearFrequencies).sort((a, b) => b.localeCompare(a));
+  const popularGradYears = Object.entries(gradYearFrequencies)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([year]) => year);
 
   // 4. Apply Filters
   const query = (q ?? "").trim().toLowerCase();
@@ -306,6 +345,9 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
             skills={allSkills}
             colleges={allColleges}
             gradYears={allGradYears}
+            popularSkills={popularSkills}
+            popularColleges={popularColleges}
+            popularGradYears={popularGradYears}
             mode={mode}
           />
         </div>

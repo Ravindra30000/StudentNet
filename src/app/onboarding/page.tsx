@@ -49,6 +49,29 @@ export default async function OnboardingPage({
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 8 }, (_, i) => currentYear - 1 + i);
 
+  // Fetch colleges from existing profiles for autocomplete suggestions
+  const { data: profilesForColleges } = await supabase
+    .from("profiles")
+    .select("college");
+
+  // Deduplicate and sort by popularity
+  const collegeFreqMap: Record<string, { original: string; count: number }> = {};
+  (profilesForColleges ?? []).forEach((p) => {
+    if (!p.college) return;
+    const trimmed = p.college.trim();
+    if (!trimmed) return;
+    const lower = trimmed.toLowerCase();
+    if (collegeFreqMap[lower]) {
+      collegeFreqMap[lower].count++;
+    } else {
+      collegeFreqMap[lower] = { original: trimmed, count: 1 };
+    }
+  });
+  const sortedColleges = Object.values(collegeFreqMap)
+    .sort((a, b) => b.count - a.count);
+  const popularColleges = sortedColleges.slice(0, 5).map((c) => c.original);
+  const allColleges = sortedColleges.map((c) => c.original);
+
   return (
     <div className="flex flex-1 flex-col py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-background">
       <main className="max-w-[680px] w-full mx-auto">
@@ -68,6 +91,8 @@ export default async function OnboardingPage({
           action={createProfile}
           error={error}
           years={years}
+          colleges={allColleges}
+          popularColleges={popularColleges}
         />
       </main>
     </div>

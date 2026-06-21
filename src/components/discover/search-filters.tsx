@@ -2,12 +2,16 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useTransition, useState, useEffect, useCallback } from "react";
-import { Search, ChevronDown, X } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
 
 interface SearchFiltersProps {
   skills: string[];
   colleges: string[];
   gradYears: string[];
+  popularSkills?: string[];
+  popularColleges?: string[];
+  popularGradYears?: string[];
   mode?: "talent" | "services";
 }
 
@@ -33,6 +37,9 @@ export default function SearchFilters({
   skills,
   colleges,
   gradYears,
+  popularSkills = [],
+  popularColleges = [],
+  popularGradYears = [],
   mode = "talent",
 }: SearchFiltersProps) {
   const router = useRouter();
@@ -138,89 +145,68 @@ export default function SearchFilters({
       <div className="flex flex-wrap items-center gap-3 justify-center md:justify-start w-full">
         {mode === "services" ? (
           /* Category Filter */
-          <div className="relative">
-            <select
+          <div className="w-48">
+            <Combobox
               value={currentCategory}
-              onChange={(e) => applyFilters({ category: e.target.value })}
-              className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-            >
-              <option value="">Category</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+              onChange={(val) => applyFilters({ category: val })}
+              options={CATEGORIES}
+              placeholder="Category"
+              freeForm={false}
+            />
           </div>
         ) : (
           <>
             {/* Skill Filter */}
-            <div className="relative">
-              <select
+            <div className="w-40">
+              <Combobox
                 value={currentSkill}
-                onChange={(e) => applyFilters({ skill: e.target.value })}
-                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-              >
-                <option value="">Skill</option>
-                {skills.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+                onChange={(val) => applyFilters({ skill: val })}
+                options={skills}
+                popularOptions={popularSkills}
+                historyKey="recent_skills_filter"
+                placeholder="Skill"
+                freeForm={true}
+              />
             </div>
 
             {/* College Filter */}
-            <div className="relative">
-              <select
+            <div className="w-48">
+              <Combobox
                 value={currentCollege}
-                onChange={(e) => applyFilters({ college: e.target.value })}
-                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-              >
-                <option value="">College</option>
-                {colleges.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+                onChange={(val) => applyFilters({ college: val })}
+                options={colleges}
+                popularOptions={popularColleges}
+                historyKey="recent_colleges_filter"
+                placeholder="College"
+                freeForm={true}
+              />
             </div>
 
             {/* Role Filter */}
-            <div className="relative">
-              <select
-                value={currentRole}
-                onChange={(e) => applyFilters({ role: e.target.value })}
-                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-              >
-                <option value="">Role</option>
-                {Object.entries(ROLE_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+            <div className="w-44">
+              <Combobox
+                value={ROLE_LABELS[currentRole] || ""}
+                onChange={(label) => {
+                  const key = Object.keys(ROLE_LABELS).find((k) => ROLE_LABELS[k] === label) || "";
+                  applyFilters({ role: key });
+                }}
+                options={Object.values(ROLE_LABELS)}
+                placeholder="Role"
+                freeForm={false}
+              />
             </div>
 
             {/* Graduation Year Filter */}
-            <div className="relative">
-              <select
+            <div className="w-44">
+              <Combobox
                 value={currentGradYear}
-                onChange={(e) => applyFilters({ grad_year: e.target.value })}
-                className="appearance-none flex items-center gap-2 pl-4 pr-10 py-2 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
-              >
-                <option value="">Graduation Year</option>
-                {gradYears.map((y) => (
-                  <option key={y} value={y}>
-                    Class of {y}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-ink/70 w-4 h-4 pointer-events-none" />
+                onChange={(val) => applyFilters({ grad_year: val })}
+                options={gradYears}
+                popularOptions={popularGradYears}
+                historyKey="recent_grad_years_filter"
+                placeholder="Graduation Year"
+                freeForm={true}
+              />
             </div>
           </>
         )}
@@ -229,7 +215,7 @@ export default function SearchFilters({
         {hasActiveFilters && (
           <button
             onClick={handleClearFilters}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full hover:bg-danger/5 text-danger font-sans text-xs font-bold transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full hover:bg-danger/5 text-danger font-sans text-xs font-bold transition-colors cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
             Clear Filters

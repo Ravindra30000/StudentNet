@@ -3,16 +3,19 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { Skill } from "@/lib/types";
-import { ChevronDown, Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import ImageCropperModal from "@/components/profile/image-cropper-modal";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Combobox } from "@/components/ui/combobox";
 
 interface OnboardingFormProps {
   skillsByCategory: Record<string, Skill[]>;
   action: (formData: FormData) => Promise<void>;
   error?: string;
   years: number[];
+  colleges?: string[];
+  popularColleges?: string[];
 }
 
 export default function OnboardingForm({
@@ -20,6 +23,8 @@ export default function OnboardingForm({
   action,
   error,
   years,
+  colleges = [],
+  popularColleges = [],
 }: OnboardingFormProps) {
   const [role, setRole] = useState("student");
   const [selectedSkills, setSelectedSkills] = useState<number[]>([]);
@@ -307,12 +312,13 @@ export default function OnboardingForm({
               >
                 College
               </label>
-              <input
-                id="college"
+              <Combobox
                 name="college"
+                options={colleges}
+                popularOptions={popularColleges}
+                historyKey="onboarding_recent_colleges"
                 placeholder="IIT Bombay"
-                type="text"
-                className="bg-surface-sunken border border-border/80 rounded-[16px] px-4 py-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent-green focus:border-accent-green transition-all"
+                freeForm={true}
               />
             </div>
 
@@ -339,22 +345,13 @@ export default function OnboardingForm({
               >
                 Graduation year
               </label>
-              <div className="relative">
-                <select
-                  id="graduation_year"
-                  name="graduation_year"
-                  defaultValue=""
-                  className="appearance-none w-full bg-surface-sunken border border-border/80 rounded-[16px] px-4 py-3 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-accent-green focus:border-accent-green transition-all cursor-pointer pr-10"
-                >
-                  <option value="">Select year</option>
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none h-4 w-4 text-muted" />
-              </div>
+              <Combobox
+                name="graduation_year"
+                options={years.map(String)}
+                historyKey="onboarding_recent_grad_years"
+                placeholder="Select year"
+                freeForm={false}
+              />
             </div>
           </section>
         ) : (
