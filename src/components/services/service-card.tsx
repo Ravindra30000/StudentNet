@@ -178,8 +178,8 @@ export default function ServiceCard({
 
       {/* Seller Header Row (Avatar overlap) */}
       <div className="px-6 relative z-10 flex items-start justify-between gap-3">
-        <Link href={`/u/${service.owner.username}`} className="flex items-start gap-3 min-w-0 group/owner -mt-5">
-          <div className="shrink-0">
+        <Link href={`/u/${service.owner.username}`} className="flex items-start gap-3 min-w-0 group/owner">
+          <div className="shrink-0 -mt-5">
             {service.owner.avatar_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
