@@ -85,7 +85,7 @@ export default async function ServiceDetailPage({
       <main className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
         
         {/* Back Link */}
-        <div className="col-span-12">
+        <div className="col-span-full">
           <Link href="/students" className="flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
             <ArrowLeft size={16} /> Back to Talent Marketplace
           </Link>

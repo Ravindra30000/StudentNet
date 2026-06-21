@@ -6,7 +6,7 @@ export default function ServiceDetailLoading() {
     <div className="bg-background min-h-screen py-12">
       <main className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
         {/* Back Link Skeleton */}
-        <div className="col-span-12">
+        <div className="col-span-full">
           <Skeleton className="h-5 w-44" />
         </div>
 
