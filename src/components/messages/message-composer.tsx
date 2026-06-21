@@ -18,12 +18,33 @@ export default function MessageComposer({ conversationId }: MessageComposerProps
 
     setBody(""); // Optimistically clear input immediately
 
+    // Dispatch custom event for optimistic UI update
+    const tempId = `temp-${Date.now()}`;
+    window.dispatchEvent(
+      new CustomEvent("optimistic-message", {
+        detail: {
+          id: tempId,
+          conversation_id: conversationId,
+          sender_id: "", // Will be set by thread
+          body: text,
+          created_at: new Date().toISOString(),
+          read_at: null,
+        },
+      })
+    );
+
     startTransition(async () => {
       try {
         await sendMessage(conversationId, text);
       } catch (err) {
         console.error("Failed to send message:", err);
         setBody(text); // Restore text on failure
+        // Dispatch event to remove the optimistic message on failure
+        window.dispatchEvent(
+          new CustomEvent("optimistic-message-failed", {
+            detail: { id: tempId },
+          })
+        );
       }
     });
   };

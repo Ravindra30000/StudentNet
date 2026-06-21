@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { deleteStartup } from "@/app/dashboard/startup/actions";
 
 export default function DeleteStartupButton({
@@ -37,7 +37,7 @@ export default function DeleteStartupButton({
         title={isPending ? "Deleting…" : "Delete Startup"}
         className="flex items-center justify-center rounded-full border border-danger/40 bg-danger/10 p-2.5 text-danger hover:bg-danger/20 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        <Trash2 size={16} />
+        {isPending ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
       </button>
     );
   }
@@ -49,7 +49,7 @@ export default function DeleteStartupButton({
       disabled={isPending}
       className="flex items-center gap-2 rounded-full border border-danger/40 bg-danger/10 px-5 py-2.5 text-sm font-bold text-danger hover:bg-danger/20 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <Trash2 size={14} />
+      {isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
       {isPending ? "Deleting…" : "Delete Startup"}
     </button>
   );

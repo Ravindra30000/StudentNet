@@ -2,6 +2,7 @@ import { addProject } from "../../actions";
 import ProjectCoverUpload from "@/components/profile/project-cover-upload";
 import ProjectImagesUpload from "@/components/profile/project-images-upload";
 import Link from "next/link";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export default async function NewProjectPage({
   searchParams,
@@ -61,12 +62,12 @@ export default async function NewProjectPage({
 
         {error && <p className="text-sm text-red-600 font-semibold">{decodeURIComponent(error)}</p>}
 
-        <button
-          type="submit"
-          className="w-fit rounded-full bg-accent px-7 py-3.5 text-base font-semibold text-accent-foreground transition-opacity hover:opacity-90 mt-4 shadow-sm"
+        <SubmitButton
+          loadingText="Adding project..."
+          className="w-fit px-7 py-3.5 text-base font-semibold mt-4 shadow-sm"
         >
           Add project
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

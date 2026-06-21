@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { login } from "./actions";
 import Logo from "@/components/logo";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export default async function LoginPage({
   searchParams,
@@ -83,12 +84,12 @@ export default async function LoginPage({
               </div>
             )}
 
-            <button
-              type="submit"
-              className="w-full bg-ink text-white font-semibold text-sm rounded-full py-4 mt-2 hover:opacity-90 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+            <SubmitButton
+              loadingText="Logging in..."
+              className="w-full py-4 mt-2"
             >
               Log in
-            </button>
+            </SubmitButton>
           </form>
 
           {/* Footer */}

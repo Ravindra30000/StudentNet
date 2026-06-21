@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { deleteCommunity } from "@/app/dashboard/communities/actions";
 
 export default function DeleteCommunityButton({
@@ -37,7 +37,7 @@ export default function DeleteCommunityButton({
         title={isPending ? "Deleting…" : "Delete Community"}
         className="flex items-center justify-center rounded-full border border-danger/40 bg-danger/10 p-2 text-danger hover:bg-danger/20 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        <Trash2 size={14} />
+        {isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
       </button>
     );
   }
@@ -49,7 +49,7 @@ export default function DeleteCommunityButton({
       disabled={isPending}
       className="w-full flex items-center justify-center gap-2 rounded-2xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-xs font-bold text-danger hover:bg-danger/20 active:scale-95 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <Trash2 size={13} />
+      {isPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
       {isPending ? "Deleting…" : "Delete Community"}
     </button>
   );

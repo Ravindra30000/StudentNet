@@ -1,10 +1,11 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { Order, OrderStatus } from "@/lib/types";
 import { updateOrderStatus, completeOrderWithReview } from "@/app/dashboard/services/actions";
 import { CheckCircle, AlertTriangle, XCircle, ArrowRight, Star } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface OrderRowProps {
   order: Order & {
@@ -18,6 +19,18 @@ interface OrderRowProps {
 export default function OrderRow({ order, role }: OrderRowProps) {
   const [isPending, startTransition] = useTransition();
   const [showReviewModal, setShowReviewModal] = useState(false);
+
+  // Lock body scroll when review modal is open
+  useEffect(() => {
+    if (showReviewModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showReviewModal]);
   const [communication, setCommunication] = useState(5);
   const [delivery, setDelivery] = useState(5);
   const [technicalSkill, setTechnicalSkill] = useState(5);
@@ -34,10 +47,11 @@ export default function OrderRow({ order, role }: OrderRowProps) {
           professionalism,
           comment,
         });
+        toast.success("Review submitted! Order completed successfully.");
         setShowReviewModal(false);
       } catch (err: unknown) {
         const error = err as Error;
-        alert(error.message || "Failed to submit review.");
+        toast.error(error.message || "Failed to submit review.");
       }
     });
   };
@@ -49,9 +63,20 @@ export default function OrderRow({ order, role }: OrderRowProps) {
     startTransition(async () => {
       try {
         await updateOrderStatus(order.id, newStatus);
+        
+        const statusLabels: Record<OrderStatus, string> = {
+          requested: "Order requested",
+          accepted: "Order accepted successfully!",
+          in_progress: "Order marked as in progress.",
+          delivered: "Work delivered successfully! Waiting for review.",
+          completed: "Order completed successfully!",
+          cancelled: "Order cancelled successfully.",
+          disputed: "Order dispute filed.",
+        };
+        toast.success(statusLabels[newStatus] || "Order updated successfully.");
       } catch (err: unknown) {
         const error = err as Error;
-        alert(error.message || "Failed to update order status.");
+        toast.error(error.message || "Failed to update order status.");
       }
     });
   };

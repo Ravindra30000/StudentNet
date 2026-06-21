@@ -60,7 +60,7 @@ export async function createTeam(formData: FormData) {
   }
 
   revalidatePath("/dashboard/team");
-  redirect("/dashboard/team");
+  redirect("/dashboard/team?success=Team created successfully!");
 }
 
 export async function addTeamMember(formData: FormData) {
@@ -112,7 +112,7 @@ export async function addTeamMember(formData: FormData) {
   }
 
   revalidatePath("/dashboard/team");
-  redirect("/dashboard/team");
+  redirect("/dashboard/team?success=Member added successfully!");
 }
 
 export async function removeTeamMember(teamId: string, profileId: string) {
@@ -167,7 +167,7 @@ export async function deleteTeam(teamId: string) {
   }
 
   revalidatePath("/dashboard/team");
-  redirect("/dashboard/team");
+  redirect("/dashboard/team?success=Team deleted successfully!");
 }
 
 export async function toggleProjectTeamLink(projectId: string, teamId: string | null) {

@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import PageProgress from "@/components/ui/page-progress";
+import { Toaster } from "sonner";
+import ToastListener from "@/components/ui/toast-listener";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -32,6 +35,9 @@ export default function RootLayout({
       className={`${jakarta.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-ink font-sans">
+        <PageProgress />
+        <Toaster position="bottom-center" richColors />
+        <ToastListener />
         <Navbar />
         <main className="flex flex-1 flex-col">{children}</main>
       </body>

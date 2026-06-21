@@ -7,12 +7,12 @@ import {
   Bell,
   Shield,
   Trash2,
-  Loader2,
   Check,
   AlertCircle,
   Eye,
   EyeOff,
 } from "lucide-react";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   changeEmail,
   changePassword,
@@ -259,16 +259,15 @@ export default function SettingsClient({
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button
+                    <SubmitButton
                       type="submit"
-                      disabled={emailLoading}
-                      className="bg-ink hover:opacity-90 text-white px-5 py-2.5 rounded-full text-xs font-semibold flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                      loading={emailLoading}
+                      loadingText="Saving Changes..."
+                      variant="primary"
+                      size="sm"
                     >
-                      {emailLoading && (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      )}
                       Save Changes
-                    </button>
+                    </SubmitButton>
                     <button
                       type="button"
                       onClick={() => {
@@ -374,16 +373,15 @@ export default function SettingsClient({
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <button
+                    <SubmitButton
                       type="submit"
-                      disabled={passwordLoading}
-                      className="bg-ink hover:opacity-90 text-white px-5 py-2.5 rounded-full text-xs font-semibold flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                      loading={passwordLoading}
+                      loadingText="Changing Password..."
+                      variant="primary"
+                      size="sm"
                     >
-                      {passwordLoading && (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      )}
                       Change Password
-                    </button>
+                    </SubmitButton>
                     <button
                       type="button"
                       onClick={() => {
@@ -599,15 +597,18 @@ export default function SettingsClient({
                   className="bg-white border border-danger/20 rounded-[16px] px-4 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-danger"
                 />
 
-                <button
+                <SubmitButton
                   type="button"
+                  loading={deleting}
+                  loadingText="Deleting account..."
                   disabled={deleteConfirmText !== "DELETE" || deleting}
                   onClick={handleDeleteAccount}
-                  className="mt-2 bg-danger hover:bg-danger/90 text-white px-5 py-3 rounded-full text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  variant="danger"
+                  size="default"
+                  className="mt-2 text-xs font-semibold"
                 >
-                  {deleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   Delete my account
-                </button>
+                </SubmitButton>
               </div>
             </div>
           </div>

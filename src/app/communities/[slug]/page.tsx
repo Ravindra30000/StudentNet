@@ -2,24 +2,18 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { createCommunityPost } from "@/app/dashboard/communities/actions";
 import {
-  joinCommunity,
-  leaveCommunity,
-  createCommunityPost,
-} from "@/app/dashboard/communities/actions";
-import { revalidatePath } from "next/cache";
-import {
-  Users,
   Calendar,
   MessageSquare,
   ArrowLeft,
   Send,
   Shield,
-  Check,
 } from "lucide-react";
 import type { CommunityPost, CommunityMember, Profile, Event } from "@/lib/types";
 import DeleteCommunityButton from "@/components/ui/delete-community-button";
 import CommunityCoverImage from "@/components/ui/community-cover-image";
+import JoinCommunityButton, { CommunityMemberCount } from "@/components/communities/join-community-button";
 
 interface PostWithAuthor extends Omit<CommunityPost, 'author_id' | 'author'> {
   author_id: string;
@@ -114,20 +108,6 @@ export default async function CommunityHomePage({
 
   const events = (eventsData as unknown as Event[]) || [];
 
-  // Page level inline join action
-  async function handleBannerJoinInline() {
-    "use server";
-    await joinCommunity(community.id);
-    revalidatePath(`/communities/${community.slug}`);
-  }
-
-  // Page level inline leave action
-  async function handleBannerLeaveInline() {
-    "use server";
-    await leaveCommunity(community.id);
-    revalidatePath(`/communities/${community.slug}`);
-  }
-
   // Gradient generator
   const getBannerGradient = (name: string) => {
     const gradients = [
@@ -177,10 +157,10 @@ export default async function CommunityHomePage({
                 {community.name}
               </h1>
               <div className="mt-4 flex items-center gap-4 text-sm font-medium text-surface/85">
-                <span className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4" />
-                  {memberCount} {memberCount === 1 ? "member" : "members"}
-                </span>
+                <CommunityMemberCount
+                  initialCount={memberCount ?? 0}
+                  communityId={community.id}
+                />
                 {events.length > 0 && (
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
@@ -197,25 +177,12 @@ export default async function CommunityHomePage({
                     <Shield className="h-3.5 w-3.5" />
                     Leader Console
                   </span>
-                ) : isJoined ? (
-                  <form action={handleBannerLeaveInline}>
-                    <button
-                      type="submit"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-surface/10 px-5 py-2.5 text-xs font-semibold text-surface hover:bg-surface/20 border border-surface/25 transition-all"
-                    >
-                      <Check className="h-4 w-4" />
-                      Joined Community
-                    </button>
-                  </form>
                 ) : (
-                  <form action={handleBannerJoinInline}>
-                    <button
-                      type="submit"
-                      className="rounded-full bg-accent-gold px-5 py-2.5 text-xs font-bold text-accent-gold-foreground hover:opacity-90 transition-opacity shadow-sm"
-                    >
-                      Join Community
-                    </button>
-                  </form>
+                  <JoinCommunityButton
+                    communityId={community.id}
+                    initialIsJoined={isJoined}
+                    communityName={community.name}
+                  />
                 )}
               </div>
             )}

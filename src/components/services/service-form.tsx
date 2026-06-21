@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Service } from "@/lib/types";
 import { Combobox } from "@/components/ui/combobox";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 interface ServiceFormProps {
   service?: Service;
@@ -121,12 +122,12 @@ export default function ServiceForm({ service, action, error }: ServiceFormProps
       {error && <p className="text-sm text-danger font-semibold">{decodeURIComponent(error)}</p>}
 
       <div className="flex gap-4 items-center">
-        <button
-          type="submit"
-          className="rounded-full bg-ink px-7 py-3.5 text-base font-semibold text-white transition-opacity hover:opacity-90 shadow-sm cursor-pointer"
+        <SubmitButton
+          loadingText="Saving service..."
+          className="px-7 py-3.5 text-base font-semibold"
         >
           {isEdit ? "Save Changes" : "Create Service"}
-        </button>
+        </SubmitButton>
         <Link
           href="/dashboard/services"
           className="rounded-full border border-border bg-surface px-7 py-3.5 text-base font-semibold text-ink hover:bg-surface-sunken transition-colors"

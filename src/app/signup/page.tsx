@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signup } from "./actions";
 import Logo from "@/components/logo";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export default async function SignupPage({
   searchParams,
@@ -100,12 +101,12 @@ export default async function SignupPage({
             </div>
           )}
 
-          <button
-            type="submit"
-            className="w-full bg-ink text-white rounded-full py-4 text-sm font-semibold hover:opacity-90 transition-opacity active:scale-[0.98] cursor-pointer"
+          <SubmitButton
+            loadingText="Signing up..."
+            className="w-full py-4"
           >
             Sign up
-          </button>
+          </SubmitButton>
         </form>
 
         <div className="flex items-center gap-4">

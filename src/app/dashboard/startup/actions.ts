@@ -64,7 +64,7 @@ export async function createStartup(formData: FormData) {
 
   revalidatePath("/dashboard/startup");
   revalidatePath("/startups");
-  redirect("/dashboard/startup");
+  redirect("/dashboard/startup?success=Startup profile created successfully!");
 }
 
 export async function updateStartup(formData: FormData) {
@@ -91,7 +91,7 @@ export async function updateStartup(formData: FormData) {
 
   revalidatePath("/dashboard/startup");
   revalidatePath("/startups");
-  redirect("/dashboard/startup");
+  redirect("/dashboard/startup?success=Startup profile updated successfully!");
 }
 
 // ✅ SECURITY FIX: verify caller owns the startup before adding a role
@@ -139,7 +139,7 @@ export async function addStartupRole(formData: FormData) {
 
   revalidatePath("/dashboard/startup");
   revalidatePath("/startups");
-  redirect("/dashboard/startup");
+  redirect("/dashboard/startup?success=Startup role added successfully!");
 }
 
 // ✅ SECURITY FIX: verify caller owns the parent startup before deleting a role
@@ -234,7 +234,7 @@ export async function applyToRole(formData: FormData) {
   }
 
   revalidatePath(`/startups/${redirect_slug}`);
-  redirect(`/startups/${redirect_slug}?success=true`);
+  redirect(`/startups/${redirect_slug}?success=Application submitted successfully!`);
 }
 
 // ✅ SECURITY FIX: verify caller is the founder of the startup before updating application status
@@ -369,5 +369,5 @@ export async function deleteStartup(formData: FormData) {
 
   revalidatePath("/dashboard/startup");
   revalidatePath("/startups");
-  redirect("/dashboard/startup");
+  redirect("/dashboard/startup?success=Startup dissolved successfully.");
 }

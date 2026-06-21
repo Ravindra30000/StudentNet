@@ -71,7 +71,7 @@ a:not([class*="bg-"]):not([class*="btn-"]):not([class*="rounded-full"]):not(.nav
 }
 .clickable-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(20, 21, 26, 0.08);
+  box-shadow: 0 8px 24px rgba(22, 56, 50, 0.12);
 }
 .clickable-card:active {
   transform: translateY(0px);
@@ -93,4 +93,28 @@ a:not([class*="bg-"]):not([class*="btn-"]):not([class*="rounded-full"]):not(.nav
   color: #163832;
   border-radius: 9999px;
 }
+
+/* Global Form Input Focus States */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="url"],
+select,
+textarea {
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="url"]:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #163832 !important;
+  box-shadow: 0 0 0 2px rgba(22, 56, 50, 0.2) !important;
+}
+
 

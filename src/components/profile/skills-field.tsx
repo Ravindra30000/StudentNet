@@ -99,8 +99,8 @@ export default function SkillsField({
                     key={skill.id}
                     className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-semibold transition-all select-none ${
                       isSelected
-                        ? "border-accent-green bg-accent-green/10 text-accent-green"
-                        : "border-border hover:bg-surface-sunken text-ink"
+                        ? "border-[#163832] bg-[#163832] text-white"
+                        : "border-border hover:bg-[#163832]/10 hover:text-[#163832] hover:border-[#163832]/30 text-ink"
                     }`}
                   >
                     <input

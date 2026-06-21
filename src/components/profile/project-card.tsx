@@ -50,15 +50,25 @@ export default function ProjectCard({
   const [showImageModal, setShowImageModal] = useState(false);
 
   useEffect(() => {
-    if (!showImageModal) return;
+    if (showVideoModal || showImageModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        setShowVideoModal(false);
         setShowImageModal(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showImageModal]);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showVideoModal, showImageModal]);
 
   const shouldTruncate = description && description.length > 150;
 

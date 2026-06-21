@@ -8,15 +8,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-[#14151A] text-white hover:bg-[#163832] hover:text-white active:bg-[#0f2420] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-[#F5B83D] focus-visible:ring-offset-2",
+          "bg-[#163832] text-white shadow-sm hover:bg-[#1e4d42] active:bg-[#0f2420] active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F5B83D] focus-visible:ring-offset-2",
         gold:
-          "bg-[#F5B83D] text-[#14151A] hover:bg-[#f0aa25] hover:shadow-md active:bg-[#e09e1a] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-[#163832] focus-visible:ring-offset-2",
+          "bg-[#F5B83D] text-[#14151A] hover:bg-[#e8a82a] hover:shadow-[0_4px_12px_rgba(245,184,61,0.4)] active:bg-[#d49920] active:scale-95 focus-visible:ring-2 focus-visible:ring-[#163832] focus-visible:ring-offset-2",
         secondary:
-          "bg-transparent border border-[#E6E6E3] text-[#14151A] hover:bg-[#163832]/8 hover:border-[#163832] hover:text-[#163832] active:bg-[#163832]/15 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-[#163832] focus-visible:ring-offset-2",
+          "border border-[#E6E6E3] bg-transparent text-[#14151A] hover:border-[#163832] hover:bg-[#163832]/10 hover:text-[#163832] active:bg-[#163832]/20 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#163832] focus-visible:ring-offset-2",
         ghost:
-          "text-[#14151A] hover:text-[#163832] hover:underline hover:underline-offset-2 active:text-[#0f2420]",
+          "text-[#14151A] hover:text-[#163832] hover:underline hover:underline-offset-4 active:text-[#0f2420] hover:bg-transparent",
         danger:
-          "bg-[#E0533D] text-white hover:bg-[#c93f2b] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-[#E0533D]/50 focus-visible:ring-offset-2",
+          "bg-[#E0533D] text-white hover:bg-[#c93f2b] active:scale-95 focus-visible:ring-2 focus-visible:ring-[#E0533D]/50 focus-visible:ring-offset-2",
       },
       size: {
         default: "h-12 px-6 py-3",

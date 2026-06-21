@@ -2,19 +2,17 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { registerForEvent, unregisterFromEvent } from "../actions";
-import { revalidatePath } from "next/cache";
 import {
   Calendar,
   MapPin,
   Video,
   ArrowLeft,
-  Check,
   Building,
   Clock,
   ExternalLink,
 } from "lucide-react";
 import type { Profile } from "@/lib/types";
+import RegisterEventButton, { EventAttendeeCount } from "@/components/events/register-event-button";
 
 interface RegistrationWithProfile {
   id: string;
@@ -57,19 +55,6 @@ export default async function EventDetailPage({
     .filter((p): p is Profile => !!p);
 
   const isRegistered = user ? attendees.some((a) => a.id === user.id) : false;
-
-  // Inline action for registration
-  async function handleRegisterInline() {
-    "use server";
-    await registerForEvent(event.id);
-    revalidatePath(`/events/${event.slug}`);
-  }
-
-  async function handleUnregisterInline() {
-    "use server";
-    await unregisterFromEvent(event.id);
-    revalidatePath(`/events/${event.slug}`);
-  }
 
   // Helpers
   const formatDate = (isoString: string) => {
@@ -155,7 +140,7 @@ export default async function EventDetailPage({
             {/* Who's Going Section */}
             <div className="rounded-3xl bg-surface p-8 shadow-sm">
               <h2 className="font-heading text-lg font-bold text-ink mb-4">
-                Attendees ({attendees.length})
+                Attendees (<EventAttendeeCount initialCount={attendees.length} eventId={event.id} />)
               </h2>
 
               {attendees.length === 0 ? (
@@ -263,26 +248,11 @@ export default async function EventDetailPage({
               {/* Registration Actions */}
               {user && (
                 <div className="mt-6 pt-4 border-t border-border/40">
-                  {isRegistered ? (
-                    <form action={handleUnregisterInline}>
-                      <button
-                        type="submit"
-                        className="w-full inline-flex justify-center items-center gap-2 rounded-full bg-ink px-4 py-3 text-xs font-semibold text-surface hover:opacity-90 transition-opacity"
-                      >
-                        <Check className="h-4 w-4" />
-                        Cancel Registration
-                      </button>
-                    </form>
-                  ) : (
-                    <form action={handleRegisterInline}>
-                      <button
-                        type="submit"
-                        className="w-full inline-flex justify-center items-center gap-2 rounded-full bg-accent-green px-4 py-3 text-xs font-semibold text-surface hover:opacity-95 transition-opacity"
-                      >
-                        Register for Event
-                      </button>
-                    </form>
-                  )}
+                  <RegisterEventButton
+                    eventId={event.id}
+                    initialIsRegistered={isRegistered}
+                    eventTitle={event.title}
+                  />
                 </div>
               )}
             </div>

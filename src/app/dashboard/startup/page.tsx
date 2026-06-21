@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { StartupRole, StartupApplication } from "@/lib/types";
 import DeleteStartupButton from "@/components/ui/delete-startup-button";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -187,12 +188,12 @@ export default async function StartupDashboardPage({
               />
             </div>
 
-            <button
-              type="submit"
-              className="mt-4 rounded-full bg-ink px-6 py-3.5 text-base font-semibold text-white hover:bg-accent-green transition-colors cursor-pointer text-center shadow-sm"
+            <SubmitButton
+              loadingText="Creating Profile..."
+              className="mt-4 px-6 py-3.5 text-base font-semibold shadow-sm"
             >
               Create Startup Profile
-            </button>
+            </SubmitButton>
           </form>
         </div>
       ) : (
@@ -254,12 +255,12 @@ export default async function StartupDashboardPage({
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-fit rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity cursor-pointer"
+                <SubmitButton
+                  loadingText="Saving Changes..."
+                  className="w-fit px-6 py-3 text-sm font-semibold"
                 >
                   Save Changes
-                </button>
+                </SubmitButton>
               </form>
             </section>
 
@@ -319,12 +320,12 @@ export default async function StartupDashboardPage({
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-fit rounded-full bg-ink px-5 py-2 text-xs font-semibold text-white hover:opacity-90 flex items-center gap-1.5 self-end mt-2 cursor-pointer"
+                  <SubmitButton
+                    loadingText="Adding Role..."
+                    className="w-fit px-5 py-2 text-xs font-semibold self-end mt-2"
                   >
                     <Plus size={14} /> Add Open Role
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
 

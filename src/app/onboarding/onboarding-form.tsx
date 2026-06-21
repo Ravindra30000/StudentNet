@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import type { Skill } from "@/lib/types";
 import { ChevronDown, Camera, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import ImageCropperModal from "@/components/profile/image-cropper-modal";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 interface OnboardingFormProps {
   skillsByCategory: Record<string, Skill[]>;
@@ -559,13 +561,15 @@ export default function OnboardingForm({
 
       {/* Bottom Action */}
       <div className="flex justify-start">
-        <button
-          type="submit"
-          className="bg-ink text-white px-8 py-4 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity active:scale-[0.97] shadow-card cursor-pointer"
+        <SubmitButton
+          loadingText="Creating profile..."
+          className="px-8 py-4 text-sm font-semibold shadow-card"
         >
           Create profile
-        </button>
+        </SubmitButton>
       </div>
+
+      <OnboardingLoader />
 
       {tempImageSrc && (
         <ImageCropperModal
@@ -588,5 +592,19 @@ export default function OnboardingForm({
         />
       )}
     </form>
+  );
+}
+
+function OnboardingLoader() {
+  const { pending } = useFormStatus();
+  if (!pending) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-4 bg-surface p-8 rounded-3xl shadow-pop border border-border">
+        <Loader2 className="h-10 w-10 animate-spin text-[#163832]" />
+        <p className="font-heading text-lg font-bold text-[#14151A]">Creating your profile...</p>
+        <p className="font-sans text-xs text-muted">Please wait, setting up your Builder Hub.</p>
+      </div>
+    </div>
   );
 }

@@ -264,8 +264,8 @@ export default async function DashboardPage({
           href="?tab=overview"
           className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold transition-all ${
             tab === "overview"
-              ? "bg-ink text-surface shadow-sm"
-              : "text-muted hover:text-ink"
+              ? "bg-[#163832] text-white shadow-sm"
+              : "text-muted hover:text-[#163832] hover:bg-[#163832]/8"
           }`}
         >
           <LayoutDashboard className="h-3.5 w-3.5" />
@@ -275,8 +275,8 @@ export default async function DashboardPage({
           href="?tab=edit"
           className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-semibold transition-all ${
             tab === "edit"
-              ? "bg-ink text-surface shadow-sm"
-              : "text-muted hover:text-ink"
+              ? "bg-[#163832] text-white shadow-sm"
+              : "text-muted hover:text-[#163832] hover:bg-[#163832]/8"
           }`}
         >
           <User className="h-3.5 w-3.5" />

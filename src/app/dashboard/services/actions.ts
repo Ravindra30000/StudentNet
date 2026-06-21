@@ -50,7 +50,7 @@ export async function createService(formData: FormData) {
   }
 
   revalidatePath("/dashboard/services");
-  redirect("/dashboard/services");
+  redirect("/dashboard/services?success=Service created successfully!");
 }
 
 export async function updateService(formData: FormData) {
@@ -95,7 +95,7 @@ export async function updateService(formData: FormData) {
   }
 
   revalidatePath("/dashboard/services");
-  redirect("/dashboard/services");
+  redirect("/dashboard/services?success=Service updated successfully!");
 }
 
 export async function toggleServiceActive(serviceId: string, currentActive: boolean) {
@@ -163,7 +163,7 @@ export async function createOrder(serviceId: string) {
 
   revalidatePath("/dashboard/services");
   revalidatePath(`/services/${serviceId}`);
-  redirect("/dashboard/services?tab=buyer");
+  redirect("/dashboard/services?tab=buyer&success=Order placed successfully!");
 }
 
 export async function updateOrderStatus(orderId: string, newStatus: OrderStatus) {

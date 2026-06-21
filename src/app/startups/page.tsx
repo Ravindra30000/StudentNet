@@ -151,6 +151,13 @@ export default async function StartupsBoardPage({
         {/* Filter bar */}
         <StartupFilters industries={allIndustries} />
 
+        {/* Results Info */}
+        <div className="-mt-2 mb-6">
+          <span className="text-xs text-muted font-bold tracking-wide uppercase">
+            {startups.length} {startups.length === 1 ? "opportunity" : "opportunities"} found
+          </span>
+        </div>
+
         {/* Startups Grid */}
         {startups.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

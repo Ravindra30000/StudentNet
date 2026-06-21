@@ -23,6 +23,15 @@ export default function ImageCropperModal({
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null);
   
   const [prevImageSrc, setPrevImageSrc] = useState(imageSrc);
+
+  // Lock body scroll when cropper modal is open
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   if (imageSrc !== prevImageSrc) {
     setPrevImageSrc(imageSrc);
     setScale(1);

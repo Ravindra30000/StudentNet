@@ -70,7 +70,11 @@ export default function MessageThread({
           const newMessage = payload.new as Message;
           setMessages((prev) => {
             if (prev.some((msg) => msg.id === newMessage.id)) return prev;
-            return [...prev, newMessage];
+            // Filter out the optimistic message matching this body and sender
+            const filtered = prev.filter(
+              (m) => !(m.sender_id === newMessage.sender_id && m.body === newMessage.body && m.id.startsWith("temp-"))
+            );
+            return [...filtered, newMessage];
           });
 
           // Mark incoming message as read
@@ -85,6 +89,39 @@ export default function MessageThread({
       supabase.removeChannel(channel);
     };
   }, [conversationId, currentUserId, supabase]);
+
+  // Listen to optimistic messages sent by MessageComposer
+  useEffect(() => {
+    const handleOptimistic = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const newMsg = { ...customEvent.detail };
+      
+      if (newMsg.conversation_id !== conversationId) return;
+
+      newMsg.sender_id = currentUserId;
+
+      setMessages((prev) => {
+        // Prevent duplicate
+        if (prev.some((m) => m.id === newMsg.id || (m.body === newMsg.body && m.sender_id === currentUserId))) {
+          return prev;
+        }
+        return [...prev, newMsg];
+      });
+    };
+
+    const handleFailed = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { id } = customEvent.detail;
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    };
+
+    window.addEventListener("optimistic-message", handleOptimistic);
+    window.addEventListener("optimistic-message-failed", handleFailed);
+    return () => {
+      window.removeEventListener("optimistic-message", handleOptimistic);
+      window.removeEventListener("optimistic-message-failed", handleFailed);
+    };
+  }, [conversationId, currentUserId]);
 
   // Scroll to bottom on message change
   useEffect(() => {
@@ -132,6 +169,8 @@ export default function MessageThread({
     }
 
     const isMe = msg.sender_id === currentUserId;
+    const isOptimistic = msg.id.startsWith("temp-");
+    
     renderedMessages.push(
       <div
         key={msg.id}
@@ -155,7 +194,7 @@ export default function MessageThread({
               isMe
                 ? "bg-ink text-white rounded-br-sm"
                 : "bg-surface-sunken text-ink rounded-bl-sm"
-            }`}
+            } ${isOptimistic ? "opacity-60 animate-pulse" : ""}`}
           >
             <p className="whitespace-pre-wrap break-words leading-relaxed">{msg.body}</p>
           </div>

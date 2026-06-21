@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { applyToRole } from "@/app/dashboard/startup/actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 interface ApplyModalProps {
   roleId: string;
@@ -20,6 +21,14 @@ export default function ApplyModal({
   onClose,
 }: ApplyModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Lock body scroll when apply modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4">
@@ -84,13 +93,14 @@ export default function ApplyModal({
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-full bg-ink px-6 py-2.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            <SubmitButton
+              loading={isSubmitting}
+              loadingText="Submitting..."
+              variant="primary"
+              size="sm"
             >
-              {isSubmitting ? "Submitting..." : "Submit application"}
-            </button>
+              Submit application
+            </SubmitButton>
           </div>
         </form>
       </div>

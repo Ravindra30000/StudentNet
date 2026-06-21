@@ -158,14 +158,20 @@ export default function ServiceCard({
     >
       {/* Cover Image/Gradient Area - wrapped in Link to detail page */}
       <Link href={`/services/${service.id}`} className="block relative z-0 aspect-[16/9] w-full overflow-hidden bg-surface-sunken">
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClasses} flex items-center justify-center`}>
-          <span className="font-heading font-extrabold text-white/20 text-5xl tracking-wider select-none">
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClasses} flex flex-col items-center justify-center p-4`}>
+          {/* Gorgeous geometric dot pattern overlay */}
+          <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.15)_1.5px,transparent_1.5px)] [background-size:16px_16px] opacity-70" />
+          
+          <span className="text-[10px] tracking-[0.25em] uppercase font-black text-white/60 mb-2 z-10 text-center px-4 truncate max-w-full drop-shadow-sm">
+            {service.category}
+          </span>
+          <span className="font-heading font-black text-white/40 text-7xl tracking-widest select-none z-10 drop-shadow-md">
             {initials}
           </span>
         </div>
         
         {/* Delivery Days Badge (Top Right) */}
-        <span className="absolute top-4 right-4 bg-ink text-white font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm max-w-[80%] truncate">
+        <span className="absolute top-4 right-4 bg-ink text-white font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm max-w-[80%] truncate z-10">
           {service.delivery_days}d delivery {service.delivery_label ? `(${service.delivery_label})` : ""}
         </span>
       </Link>

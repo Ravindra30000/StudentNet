@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createOrder } from "@/app/dashboard/services/actions";
 import { startConversation } from "@/app/dashboard/messages/actions";
 import { Star, Clock, CheckCircle, ShoppingBag, ArrowLeft } from "lucide-react";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export default async function ServiceDetailPage({
   ];
 
   return (
-    <div className="bg-background min-h-screen py-12">
+    <div className="bg-background min-h-screen pt-12 pb-32 lg:pb-12">
       <main className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
         
         {/* Back Link */}
@@ -188,7 +189,7 @@ export default async function ServiceDetailPage({
           <div className="sticky top-24 flex flex-col gap-6">
             
             {/* Price & Checkout Card */}
-            <div className="bg-surface rounded-2xl p-6 shadow-card flex flex-col gap-6 border border-border">
+            <div className="hidden lg:flex bg-surface rounded-2xl p-6 shadow-card flex-col gap-6 border border-border">
               <div className="flex justify-between items-end">
                 <div>
                   <span className="text-xs text-muted uppercase tracking-wider font-semibold">Pricing</span>
@@ -212,20 +213,22 @@ export default async function ServiceDetailPage({
                 ) : (
                   <>
                     <form action={handleOrder}>
-                      <button
-                        type="submit"
-                        className="w-full rounded-full bg-accent-gold text-accent-gold-foreground font-bold text-sm py-3 hover:opacity-90 transition-opacity cursor-pointer shadow-sm"
+                      <SubmitButton
+                        loadingText="Ordering..."
+                        variant="gold"
+                        className="w-full text-sm py-3 font-bold"
                       >
                         Order Now
-                      </button>
+                      </SubmitButton>
                     </form>
                     <form action={handleMessage}>
-                      <button
-                        type="submit"
-                        className="w-full rounded-full border border-border text-ink bg-surface hover:bg-surface-sunken font-semibold text-sm py-3 transition-colors cursor-pointer"
+                      <SubmitButton
+                        loadingText="Opening Chat..."
+                        variant="secondary"
+                        className="w-full text-sm py-3 font-semibold"
                       >
                         Message Seller
-                      </button>
+                      </SubmitButton>
                     </form>
                   </>
                 )}
@@ -269,6 +272,50 @@ export default async function ServiceDetailPage({
         </div>
 
       </main>
+
+      {/* Mobile Sticky Bottom Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border px-6 py-4 flex items-center justify-between shadow-[0_-4px_16px_rgba(22,56,50,0.08)]">
+        <div>
+          <span className="text-[10px] text-muted uppercase tracking-wider font-semibold">Price</span>
+          <div className="font-heading text-xl font-bold text-ink">
+            ₹{service.price_inr.toLocaleString()}
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5">
+          {isOwner ? (
+            <Link
+              href={`/dashboard/services/${service.id}/edit`}
+              className="rounded-full bg-ink px-6 py-2.5 font-semibold text-xs text-white hover:opacity-90 transition-opacity text-center cursor-pointer"
+            >
+              Edit Service
+            </Link>
+          ) : (
+            <>
+              <form action={handleMessage}>
+                <SubmitButton
+                  loadingText="Chat..."
+                  variant="secondary"
+                  size="sm"
+                  className="px-4 py-2 font-semibold text-xs"
+                >
+                  Message
+                </SubmitButton>
+              </form>
+              <form action={handleOrder}>
+                <SubmitButton
+                  loadingText="Ordering..."
+                  variant="gold"
+                  size="sm"
+                  className="px-4 py-2 font-bold text-xs"
+                >
+                  Order Now
+                </SubmitButton>
+              </form>
+            </>
+          )}
+        </div>
+      </div>
+
     </div>
   );
 }

@@ -123,8 +123,8 @@ export default async function EventsPage({
                 href={`/events?filter=${opt.value}`}
                 className={`rounded-full px-5 py-2 text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-ink text-surface shadow-sm"
-                    : "border border-border text-ink hover:bg-surface-sunken"
+                    ? "bg-[#163832] text-white shadow-sm border border-[#163832]"
+                    : "border border-border text-ink hover:bg-[#163832]/10 hover:text-[#163832] hover:border-[#163832]/30"
                 }`}
               >
                 {opt.label}
