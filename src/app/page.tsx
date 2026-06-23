@@ -15,20 +15,16 @@ import {
   FileText,
   Palette,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Users,
+  Briefcase
 } from "lucide-react";
-
-interface ProjectResponse {
-  id: string;
-  title: string;
-  description: string | null;
-  tech_stack: string[];
-  cover_image_url: string | null;
-  project_images?: string[] | null;
-  video_url?: string | null;
-  demo_url: string | null;
-  github_url: string | null;
-}
+import {
+  getCommunityRelevanceScore,
+  getProjectRelevanceScore,
+  getStartupRelevanceScore
+} from "@/lib/recommendations";
+import JoinCommunityButton, { CommunityMemberCount } from "@/components/communities/join-community-button";
 
 const HOME_CATEGORIES = [
   { name: "Web Development", icon: Code, color: "bg-emerald-500/10 text-emerald-600" },
@@ -51,6 +47,12 @@ export default async function Home() {
     college: string | null;
     branch: string | null;
     skills: string[];
+    profile_skills: {
+      skills: {
+        name: string;
+        category?: string | null;
+      } | null;
+    }[];
   } | null = null;
 
   if (user) {
@@ -62,7 +64,8 @@ export default async function Home() {
         branch,
         profile_skills (
           skills (
-            name
+            name,
+            category
           )
         )
       `)
@@ -70,18 +73,24 @@ export default async function Home() {
       .maybeSingle();
 
     if (userProfile) {
-      const skills = (((userProfile.profile_skills as unknown as {
-        skills: { name: string } | { name: string }[] | null;
+      const skillsParsed = (((userProfile.profile_skills as unknown as {
+        skills: { name: string; category?: string | null } | { name: string; category?: string | null }[] | null;
       }[]) || [])).map((ps) => {
         const s = Array.isArray(ps.skills) ? ps.skills[0] : ps.skills;
-        return s?.name || "";
-      }).filter(Boolean);
+        return {
+          name: s?.name || "",
+          category: s?.category || null
+        };
+      }).filter((s) => s.name);
 
       currentUserProfile = {
         id: userProfile.id,
         college: userProfile.college,
         branch: userProfile.branch,
-        skills,
+        skills: skillsParsed.map((s) => s.name),
+        profile_skills: skillsParsed.map((s) => ({
+          skills: { name: s.name, category: s.category }
+        }))
       };
     }
   }
@@ -199,21 +208,192 @@ export default async function Home() {
       project_images,
       video_url,
       demo_url,
-      github_url
-    `)
-    .limit(3);
+      github_url,
+      owner_id,
+      owner:profiles!owner_id (
+        username,
+        full_name,
+        avatar_url,
+        college,
+        branch
+      )
+    `);
 
-  const featuredProjects = ((dbProjects as unknown as ProjectResponse[]) || []).map((project) => ({
-    id: project.id,
-    title: project.title,
-    description: project.description,
-    techStack: project.tech_stack,
-    coverImageUrl: project.cover_image_url,
-    projectImages: project.project_images,
-    videoUrl: project.video_url,
-    demoUrl: project.demo_url,
-    githubUrl: project.github_url,
-  }));
+  interface RawProjectOwner {
+    username: string;
+    full_name: string;
+    avatar_url: string | null;
+    college: string | null;
+    branch: string | null;
+  }
+
+  interface RawProject {
+    id: string;
+    title: string;
+    description: string | null;
+    tech_stack: string[] | null;
+    cover_image_url: string | null;
+    project_images: string[] | null;
+    video_url: string | null;
+    demo_url: string | null;
+    github_url: string | null;
+    owner_id: string;
+    owner: RawProjectOwner | null;
+  }
+
+  const mappedProjects = ((dbProjects as unknown as RawProject[]) || []).map((project) => {
+    const techStack = project.tech_stack || [];
+    const ownerData = project.owner ? {
+      username: project.owner.username,
+      full_name: project.owner.full_name,
+      avatar_url: project.owner.avatar_url,
+      college: project.owner.college,
+    } : null;
+
+    const projectForRelevance = {
+      id: project.id,
+      owner_id: project.owner_id,
+      tech_stack: techStack,
+      owner: project.owner ? {
+        branch: project.owner.branch,
+        college: project.owner.college
+      } : null
+    };
+
+    const score = getProjectRelevanceScore(currentUserProfile, projectForRelevance);
+
+    return {
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      techStack,
+      coverImageUrl: project.cover_image_url,
+      projectImages: project.project_images,
+      videoUrl: project.video_url,
+      demoUrl: project.demo_url,
+      githubUrl: project.github_url,
+      score,
+      owner: ownerData,
+    };
+  });
+
+  const featuredProjects = mappedProjects
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
+
+  // 2b. Fetch communities
+  const { data: dbCommunities } = await supabase
+    .from("communities")
+    .select(`
+      id,
+      name,
+      description,
+      slug,
+      cover_image_url,
+      community_members (
+        profile_id
+      )
+    `);
+
+  interface DbCommunityMember {
+    profile_id: string;
+  }
+
+  interface DbCommunity {
+    id: string;
+    name: string;
+    description: string | null;
+    slug: string;
+    cover_image_url: string | null;
+    community_members: DbCommunityMember[] | null;
+  }
+
+  const recommendedCommunities = ((dbCommunities as unknown as DbCommunity[]) ?? []).map((c) => {
+    const score = getCommunityRelevanceScore(currentUserProfile, {
+      id: c.id,
+      name: c.name,
+      description: c.description
+    });
+
+    const membersCount = c.community_members?.length ?? 0;
+    const isJoined = currentUserProfile 
+      ? (c.community_members ?? []).some((m) => m.profile_id === currentUserProfile?.id)
+      : false;
+
+    return {
+      id: c.id,
+      name: c.name,
+      description: c.description,
+      slug: c.slug,
+      cover_image_url: c.cover_image_url,
+      membersCount,
+      isJoined,
+      score
+    };
+  })
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3);
+
+  // 2c. Fetch startups
+  const { data: dbStartups } = await supabase
+    .from("startups")
+    .select(`
+      id,
+      slug,
+      name,
+      idea,
+      industry,
+      stage,
+      logo_url,
+      startup_roles (
+        id,
+        title,
+        skills_required,
+        commitment,
+        equity_offered
+      )
+    `);
+
+  interface DbStartupRole {
+    id: string;
+    title: string;
+    skills_required: string[];
+    commitment: string;
+    equity_offered: string | null;
+  }
+
+  interface DbStartup {
+    id: string;
+    slug: string;
+    name: string;
+    idea: string;
+    industry: string;
+    stage: string;
+    logo_url: string | null;
+    startup_roles: DbStartupRole[] | null;
+  }
+
+  const recommendedStartups = ((dbStartups as unknown as DbStartup[]) ?? []).map((s) => {
+    const score = getStartupRelevanceScore(currentUserProfile, {
+      id: s.id,
+      industry: s.industry,
+      startup_roles: s.startup_roles
+    });
+
+    return {
+      id: s.id,
+      slug: s.slug,
+      name: s.name,
+      idea: s.idea,
+      industry: s.industry,
+      stage: s.stage,
+      logo_url: s.logo_url,
+      roles: s.startup_roles || [],
+      score
+    };
+  })
+  .sort((a, b) => b.score - a.score)
+  .slice(0, 3);
 
   // 3. Fetch active service counts by category
   const { data: categoryCounts } = await supabase
@@ -457,7 +637,7 @@ export default async function Home() {
       <section className="mx-auto w-full max-w-6xl px-6 mb-24 grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Featured Services (2 cols span) */}
         <div className="lg:col-span-2">
-          <div className="flex justify-between items-end mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
             <div>
               <h2 className="font-heading text-2xl font-bold text-ink flex items-center gap-2">
                 <Sparkles className="w-5.5 h-5.5 text-accent-gold fill-accent-gold" />
@@ -469,7 +649,7 @@ export default async function Home() {
             </div>
             <Link
               href="/students?mode=services"
-              className="text-sm font-semibold text-accent-green hover:underline flex items-center gap-1"
+              className="text-sm font-semibold text-accent-green hover:underline flex items-center gap-1 transition-all shrink-0"
             >
               <span>Explore all</span>
               <ArrowRight className="h-4 w-4" />
@@ -522,7 +702,7 @@ export default async function Home() {
 
       {/* Featured Builders Section */}
       <section className="mx-auto w-full max-w-6xl px-6 mb-20">
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
           <div>
             <h2 className="font-heading text-2xl font-bold text-ink">
               Featured builders
@@ -533,7 +713,7 @@ export default async function Home() {
           </div>
           <Link
             href="/students"
-            className="text-sm font-medium text-accent-green hover:underline flex items-center gap-1 transition-all"
+            className="text-sm font-semibold text-accent-green hover:underline flex items-center gap-1 transition-all shrink-0"
           >
             <span>View all</span>
             <ArrowRight className="h-4 w-4" />
@@ -547,10 +727,178 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Recommended Communities Section */}
+      {recommendedCommunities.length > 0 && (
+        <section className="mx-auto w-full max-w-6xl px-6 mb-20">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+            <div>
+              <h2 className="font-heading text-2xl font-bold text-ink flex items-center gap-2">
+                <Users className="w-5.5 h-5.5 text-accent-green" />
+                Recommended communities
+              </h2>
+              <p className="text-sm text-muted mt-1">
+                Colleges, clubs, and interest groups matched with your profile.
+              </p>
+            </div>
+            <Link
+              href="/communities"
+              className="text-sm font-semibold text-accent-green hover:underline flex items-center gap-1 transition-all shrink-0"
+            >
+              <span>Explore all</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {recommendedCommunities.map((community) => (
+              <div
+                key={community.id}
+                className="bg-surface rounded-2xl border border-border/40 p-6 flex flex-col justify-between hover:shadow-card-hover transition-all duration-300 relative overflow-hidden"
+              >
+                {/* Visual Cover/Color header inside the card */}
+                <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-accent-green/60 to-ink/40" />
+                
+                <div className="pt-2">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <h3 className="font-heading text-lg font-bold text-ink hover:text-accent-green transition-colors truncate">
+                      <Link href={`/communities/${community.slug}`}>
+                        {community.name}
+                      </Link>
+                    </h3>
+                  </div>
+                  <p className="text-sm text-muted line-clamp-2 mb-6 min-h-[40px]">
+                    {community.description || "No description provided."}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 mt-auto pt-4 border-t border-border/10">
+                  <span className="text-xs text-muted font-medium flex items-center gap-1.5 shrink-0">
+                    <CommunityMemberCount initialCount={community.membersCount} communityId={community.id} />
+                  </span>
+                  
+                  <div className="shrink-0 relative z-10">
+                    <JoinCommunityButton
+                      communityId={community.id}
+                      initialIsJoined={community.isJoined}
+                      communityName={community.name}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Featured Startups Section */}
+      {recommendedStartups.length > 0 && (
+        <section className="mx-auto w-full max-w-6xl px-6 mb-20">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
+            <div>
+              <h2 className="font-heading text-2xl font-bold text-ink flex items-center gap-2">
+                <Briefcase className="w-5.5 h-5.5 text-accent-gold" />
+                Recommended startups & roles
+              </h2>
+              <p className="text-sm text-muted mt-1">
+                Exciting student-led ventures looking for co-founders and team members.
+              </p>
+            </div>
+            <Link
+              href="/startups"
+              className="text-sm font-semibold text-accent-green hover:underline flex items-center gap-1 transition-all shrink-0"
+            >
+              <span>Explore all</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {recommendedStartups.map((startup) => (
+              <div
+                key={startup.id}
+                className="bg-surface rounded-2xl border border-border/40 p-6 flex flex-col justify-between hover:shadow-card-hover transition-all duration-300 relative overflow-hidden"
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    {startup.logo_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={startup.logo_url}
+                        alt={startup.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-border/40 shadow-sm"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-gold/20 to-accent-green/20 flex items-center justify-center font-heading font-bold text-lg text-ink">
+                        {startup.name.charAt(0)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="font-heading text-base font-bold text-ink hover:text-accent-green transition-colors truncate">
+                        <Link href={`/startups/${startup.slug}`}>
+                          {startup.name}
+                        </Link>
+                      </h3>
+                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent-gold/10 text-accent-gold border border-accent-gold/20">
+                        {startup.stage}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-muted line-clamp-2 mb-4">
+                    {startup.idea}
+                  </p>
+
+                  <div className="mb-4">
+                    <span className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-2">
+                      Industry
+                    </span>
+                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-sunken border border-border/20 text-ink">
+                      {startup.industry}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Open roles inside the card */}
+                <div className="pt-4 border-t border-border/10 mt-auto">
+                  <span className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-2">
+                    Open Roles ({startup.roles.length})
+                  </span>
+                  {startup.roles.length === 0 ? (
+                    <p className="text-xs text-muted italic">No open roles currently.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {startup.roles.slice(0, 3).map((role) => (
+                        <Link
+                          key={role.id}
+                          href={`/startups/${startup.slug}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-accent-green/5 hover:bg-accent-green/10 border border-accent-green/15 text-accent-green transition-all animate-fade-in"
+                        >
+                          <span>{role.title}</span>
+                          {role.equity_offered && (
+                            <span className="text-[10px] opacity-75 font-semibold">
+                              ({role.equity_offered})
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                      {startup.roles.length > 3 && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-bold bg-surface-sunken text-muted">
+                          +{startup.roles.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Featured Projects Section */}
       {featuredProjects.length > 0 && (
         <section className="mx-auto w-full max-w-6xl px-6 mb-24">
-          <div className="flex justify-between items-end mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8">
             <div>
               <h2 className="font-heading text-2xl font-bold text-ink">
                 Featured projects
@@ -559,11 +907,27 @@ export default async function Home() {
                 Innovative products and startups created by students.
               </p>
             </div>
+            <Link
+              href="/projects"
+              className="text-sm font-semibold text-accent-green hover:underline flex items-center gap-1 transition-all shrink-0"
+            >
+              <span>Explore all</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProjects.map((project) => (
-              <ProjectCard key={project.id} {...project} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+            {featuredProjects.map((project, idx) => (
+              <div
+                key={project.id}
+                className={`${
+                  idx >= 2 ? "hidden sm:block" : ""
+                } ${
+                  idx >= 3 ? "sm:hidden xl:block" : ""
+                }`}
+              >
+                <ProjectCard {...project} />
+              </div>
             ))}
           </div>
         </section>

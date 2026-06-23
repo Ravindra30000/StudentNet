@@ -121,6 +121,15 @@ export default async function DashboardPage({
     relevanceScore: number;
   }
 
+  interface RecommendedStartupRole {
+    id: string;
+    startup_id: string;
+    title: string;
+    skills_required: string[];
+    commitment: string;
+    equity_offered: string | null;
+  }
+
   interface RecommendedStartup {
     id: string;
     slug: string;
@@ -133,15 +142,19 @@ export default async function DashboardPage({
     created_at: string;
     updated_at: string;
     relevanceScore: number;
-    startup_roles: {
-      skills_required: string[];
-    }[];
+    startup_roles: RecommendedStartupRole[];
   }
 
   type SkillLinkType = { skill_id: number; skills: { name: string; category: string | null } | null };
 
   const mySkillIds = new Set<number>(
     ((mySkillLinks as SkillLinkType[] | null) ?? []).map((row) => row.skill_id)
+  );
+
+  const mySkillsSet = new Set<string>(
+    ((mySkillLinks as SkillLinkType[] | null) ?? [])
+      .map((row) => row.skills?.name.toLowerCase())
+      .filter(Boolean) as string[]
   );
 
   // Construct currentUserProfile object for recommendations scoring
@@ -578,33 +591,124 @@ export default async function DashboardPage({
                       const colorIndex = startup.name.length % colors.length;
                       const colorClass = colors[colorIndex];
                       return (
-                        <Link
+                        <div
                           key={startup.id}
-                          href={`/startups/${startup.slug}`}
-                          className="group flex items-start gap-4 p-5 bg-surface border border-border/40 rounded-2xl hover:shadow-md hover:border-accent-green/30 transition-all duration-200"
+                          className="group bg-surface border border-border/40 rounded-2xl hover:shadow-md transition-all duration-200 overflow-hidden"
                         >
-                          <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-heading text-xs font-extrabold border shrink-0 ${colorClass}`}>
-                            {initials}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <h5 className="font-heading text-sm font-bold text-ink group-hover:text-accent-green transition-colors truncate">
-                                {startup.name}
-                              </h5>
-                              {startup.relevanceScore > 0 && (
-                                <span className="text-[10px] font-bold text-accent-green bg-accent-green/5 border border-accent-green/20 px-2 py-0.5 rounded-full shrink-0">
-                                  Match
-                                </span>
-                              )}
+                          <Link
+                            href={`/startups/${startup.slug}`}
+                            className="flex items-start gap-4 p-5 border-b border-border/10 hover:bg-surface-sunken/20 transition-colors block"
+                          >
+                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-heading text-xs font-extrabold border shrink-0 ${colorClass}`}>
+                              {initials}
                             </div>
-                            <p className="text-xs text-muted truncate mt-0.5">
-                              Industry: <span className="font-medium text-ink">{startup.industry}</span> • {startup.stage} Stage
-                            </p>
-                            <p className="text-xs text-muted line-clamp-2 mt-2 leading-relaxed">
-                              {startup.idea}
-                            </p>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
+                                <h5 className="font-heading text-sm font-bold text-ink group-hover:text-accent-green transition-colors truncate">
+                                  {startup.name}
+                                </h5>
+                                {startup.relevanceScore > 0 && (
+                                  <span className="text-[10px] font-bold text-accent-green bg-accent-green/5 border border-accent-green/20 px-2 py-0.5 rounded-full shrink-0">
+                                    Match
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted truncate mt-0.5">
+                                Industry: <span className="font-medium text-ink">{startup.industry}</span> • {startup.stage} Stage
+                              </p>
+                              <p className="text-xs text-muted line-clamp-2 mt-2 leading-relaxed">
+                                {startup.idea}
+                              </p>
+                            </div>
+                          </Link>
+
+                          {/* Open roles section */}
+                          <div className="px-5 py-4 bg-surface-secondary/40 flex flex-col gap-3">
+                            <span className="text-[10px] font-bold text-muted uppercase tracking-wider block">
+                              Open Positions ({startup.startup_roles?.length ?? 0})
+                            </span>
+                            
+                            {(startup.startup_roles && startup.startup_roles.length > 0) ? (
+                              <div className="flex flex-col gap-2.5">
+                                {startup.startup_roles.slice(0, 2).map((role) => {
+                                  const required = role.skills_required || [];
+                                  const matching = required.filter((s) => mySkillsSet.has(s.toLowerCase()));
+                                  const hasMatch = matching.length > 0;
+
+                                  return (
+                                    <div
+                                      key={role.id}
+                                      className="p-3 bg-surface border border-border/30 rounded-xl flex flex-col gap-2 shadow-sm"
+                                    >
+                                      <div className="flex justify-between items-start gap-2">
+                                        <Link
+                                          href={`/startups/${startup.slug}`}
+                                          className="text-xs font-bold text-ink hover:text-accent-green hover:underline truncate"
+                                        >
+                                          {role.title}
+                                        </Link>
+                                        <span className="text-[10px] font-medium text-muted shrink-0">
+                                          {role.commitment}
+                                        </span>
+                                      </div>
+
+                                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                                        {role.equity_offered && (
+                                          <span className="text-[10px] font-semibold text-accent-gold bg-accent-gold/5 px-2 py-0.5 rounded-md border border-accent-gold/20 shrink-0">
+                                            {role.equity_offered} equity
+                                          </span>
+                                        )}
+                                        
+                                        <Link
+                                          href={`/startups/${startup.slug}`}
+                                          className="text-[10px] font-bold text-accent-green hover:underline ml-auto flex items-center gap-0.5"
+                                        >
+                                          Apply
+                                          <ArrowRight className="h-3 w-3" />
+                                        </Link>
+                                      </div>
+
+                                      {/* Skills Highlight */}
+                                      {required.length > 0 && (
+                                        <div className="pt-2 border-t border-border/10 flex flex-wrap gap-1.5 items-center">
+                                          <span className="text-[9px] font-bold text-muted uppercase">
+                                            {hasMatch ? "Matched Skills:" : "Skills:"}
+                                          </span>
+                                          {required.map((skill) => {
+                                            const isMatch = mySkillsSet.has(skill.toLowerCase());
+                                            return (
+                                              <span
+                                                key={skill}
+                                                className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-all ${
+                                                  isMatch
+                                                    ? "bg-accent-green/10 text-accent-green font-bold border border-accent-green/20"
+                                                    : "bg-surface-sunken text-muted"
+                                                }`}
+                                              >
+                                                {skill}
+                                              </span>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+
+                                {startup.startup_roles.length > 2 && (
+                                  <Link
+                                    href={`/startups/${startup.slug}`}
+                                    className="text-[10px] font-bold text-muted hover:text-accent-green text-center py-1 mt-1 block hover:underline"
+                                  >
+                                    See all {startup.startup_roles.length} roles
+                                  </Link>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted italic">No open roles currently.</span>
+                            )}
                           </div>
-                        </Link>
+                        </div>
                       );
                     })
                   ) : (

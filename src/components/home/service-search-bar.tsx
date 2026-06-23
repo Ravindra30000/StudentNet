@@ -36,7 +36,7 @@ export default function ServiceSearchBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Find the perfect student service..."
+          placeholder="Search services..."
           className="w-full pl-16 pr-28 py-4.5 rounded-full border border-border bg-surface font-sans text-base text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent-green/20 focus:border-accent-green transition-all shadow-inner"
         />
         <button

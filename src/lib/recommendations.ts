@@ -142,3 +142,102 @@ export function getStartupRelevanceScore(
 
   return score;
 }
+
+export interface RecommendationBaseProject {
+  id: string;
+  owner_id: string;
+  tech_stack: string[];
+  owner?: {
+    branch: string | null;
+    college: string | null;
+  } | null;
+}
+
+export function getProjectRelevanceScore(
+  user: RecommendationBaseProfile | null,
+  project: RecommendationBaseProject
+): number {
+  if (!user || user.id === project.owner_id) return 0;
+
+  let score = 0;
+
+  // 1. Same branch/domain matching of owner
+  if (
+    user.branch &&
+    project.owner?.branch &&
+    user.branch.toLowerCase().trim() === project.owner.branch.toLowerCase().trim()
+  ) {
+    score += 50;
+  }
+
+  // 2. Tech stack overlaps with user skills
+  const userSkillNames = new Set(
+    user.profile_skills
+      .map((ps) => ps.skills?.name.toLowerCase().trim())
+      .filter(Boolean) as string[]
+  );
+
+  if (project.tech_stack && project.tech_stack.length > 0) {
+    project.tech_stack.forEach((tech) => {
+      if (userSkillNames.has(tech.toLowerCase().trim())) {
+        score += 10;
+      }
+    });
+  }
+
+  // 3. Same college boost
+  if (
+    user.college &&
+    project.owner?.college &&
+    user.college.toLowerCase().trim() === project.owner.college.toLowerCase().trim()
+  ) {
+    score += 5;
+  }
+
+  return score;
+}
+
+export interface RecommendationBaseCommunity {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export function getCommunityRelevanceScore(
+  user: RecommendationBaseProfile | null,
+  community: RecommendationBaseCommunity
+): number {
+  if (!user) return 0;
+
+  let score = 0;
+
+  const userSkillNames = new Set(
+    user.profile_skills
+      .map((ps) => ps.skills?.name.toLowerCase().trim())
+      .filter(Boolean) as string[]
+  );
+
+  const textToSearch = [
+    community.name,
+    community.description ?? ""
+  ].join(" ").toLowerCase();
+
+  // 1. Keyword check for branch / college
+  if (user.branch && textToSearch.includes(user.branch.toLowerCase().trim())) {
+    score += 50;
+  }
+
+  if (user.college && textToSearch.includes(user.college.toLowerCase().trim())) {
+    score += 30;
+  }
+
+  // 2. Keyword check for skills
+  userSkillNames.forEach((skill) => {
+    if (textToSearch.includes(skill)) {
+      score += 10;
+    }
+  });
+
+  return score;
+}
+

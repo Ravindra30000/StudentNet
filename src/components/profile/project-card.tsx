@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ExternalLink, Play, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { splitLongTechTags } from "@/lib/tech-stack";
 
@@ -14,6 +15,12 @@ export interface ProjectCardProps {
   videoUrl?: string | null;
   demoUrl?: string | null;
   githubUrl?: string | null;
+  owner?: {
+    username: string;
+    full_name: string;
+    avatar_url: string | null;
+    college: string | null;
+  } | null;
 }
 
 function GithubIcon({ className }: { className?: string }) {
@@ -43,6 +50,7 @@ export default function ProjectCard({
   videoUrl,
   demoUrl,
   githubUrl,
+  owner,
 }: ProjectCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -233,9 +241,39 @@ export default function ProjectCard({
             );
           })()}
 
+          {/* Owner info */}
+          {owner && (
+            <div className="mt-auto pt-3 border-t border-border/20 flex items-center gap-2">
+              <Link href={`/u/${owner.username}`} className="flex items-center gap-2 group/owner shrink-0 min-w-0">
+                {owner.avatar_url ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={owner.avatar_url}
+                    alt={owner.full_name}
+                    className="w-6 h-6 rounded-full object-cover border border-border/40"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-accent-green/10 flex items-center justify-center text-accent-green font-heading font-bold text-[10px]">
+                    {owner.full_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-ink group-hover/owner:text-accent-green transition-colors truncate">
+                    {owner.full_name}
+                  </p>
+                  {owner.college && (
+                    <p className="text-[10px] text-muted truncate">
+                      {owner.college}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            </div>
+          )}
+
           {/* Links */}
           {(demoUrl || githubUrl) && (
-            <div className="flex gap-4 mt-auto pt-4 border-t border-border/40">
+            <div className={`flex gap-4 pt-3 ${owner ? "mt-2" : "mt-auto border-t border-border/40"}`}>
               {demoUrl && (
                 <a
                   href={demoUrl}
