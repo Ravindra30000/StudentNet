@@ -9,6 +9,7 @@ import ProjectCard from "@/components/profile/project-card";
 import DeleteProjectForm from "@/components/profile/delete-project-form";
 import SkillsField from "@/components/profile/skills-field";
 import { Combobox } from "@/components/ui/combobox";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   LayoutDashboard,
   User,
@@ -818,12 +819,12 @@ export default async function DashboardPage({
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
-            <button
-              type="submit"
+            <SubmitButton
+              loadingText="Saving changes..."
               className="w-fit rounded-full bg-ink px-7 py-3.5 text-base font-semibold text-white transition-all duration-300 hover:bg-accent-green hover:-translate-y-0.5 hover:shadow-card-hover active:translate-y-0 active:scale-98 cursor-pointer"
             >
               Save changes
-            </button>
+            </SubmitButton>
           </form>
 
           {/* Projects List */}

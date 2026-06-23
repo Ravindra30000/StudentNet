@@ -92,7 +92,20 @@ export default async function MessagesPage({
       .in("conversation_id", conversationIds)
       .neq("profile_id", user.id);
 
-    // Fetch the last message and unread count for each conversation
+    // Fetch all unread messages for these conversation IDs in a single batch query
+    const { data: unreadMessages } = await supabase
+      .from("messages")
+      .select("conversation_id")
+      .in("conversation_id", conversationIds)
+      .neq("sender_id", user.id)
+      .is("read_at", null);
+
+    const unreadCounts: Record<string, number> = {};
+    (unreadMessages || []).forEach((msg) => {
+      unreadCounts[msg.conversation_id] = (unreadCounts[msg.conversation_id] || 0) + 1;
+    });
+
+    // Fetch the last message for each conversation
     conversationList = await Promise.all(
       (others ?? []).map(async (other) => {
         const { data: lastMessages } = await supabase
@@ -102,13 +115,6 @@ export default async function MessagesPage({
           .order("created_at", { ascending: false })
           .limit(1);
 
-        const { count } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", other.conversation_id)
-          .neq("sender_id", user.id)
-          .is("read_at", null);
-
         const recipientRaw = other.profile;
         const recipient = (Array.isArray(recipientRaw) ? recipientRaw[0] : recipientRaw) as Profile;
 
@@ -116,7 +122,7 @@ export default async function MessagesPage({
           id: other.conversation_id,
           recipient,
           lastMessage: lastMessages?.[0] || null,
-          unreadCount: count || 0,
+          unreadCount: unreadCounts[other.conversation_id] || 0,
         };
       })
     );
