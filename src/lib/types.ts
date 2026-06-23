@@ -54,6 +54,7 @@ export interface Service {
   delivery_days: number;
   delivery_label?: string | null;
   is_active: boolean;
+  type: 'offered' | 'sought';
   created_at: string;
   profiles?: Profile;
 }

@@ -23,6 +23,7 @@ export async function createService(formData: FormData) {
   const price_inr = Number(formData.get("price_inr") ?? 0);
   const delivery_days = Number(formData.get("delivery_days") ?? 1);
   const delivery_label = String(formData.get("delivery_label") ?? "").trim() || null;
+  const type = String(formData.get("type") ?? "offered").trim() as 'offered' | 'sought';
 
   if (!title) {
     redirect("/dashboard/services/new?error=Title is required");
@@ -32,6 +33,9 @@ export async function createService(formData: FormData) {
   }
   if (delivery_days <= 0) {
     redirect("/dashboard/services/new?error=Delivery days must be greater than 0");
+  }
+  if (type !== "offered" && type !== "sought") {
+    redirect("/dashboard/services/new?error=Invalid service type");
   }
 
   const { error } = await supabase.from("services").insert({
@@ -43,6 +47,7 @@ export async function createService(formData: FormData) {
     delivery_days,
     delivery_label,
     is_active: true,
+    type,
   });
 
   if (error) {
@@ -63,6 +68,7 @@ export async function updateService(formData: FormData) {
   const price_inr = Number(formData.get("price_inr") ?? 0);
   const delivery_days = Number(formData.get("delivery_days") ?? 1);
   const delivery_label = String(formData.get("delivery_label") ?? "").trim() || null;
+  const type = String(formData.get("type") ?? "offered").trim() as 'offered' | 'sought';
 
   if (!id) {
     redirect("/dashboard/services?error=Service ID is missing");
@@ -76,6 +82,9 @@ export async function updateService(formData: FormData) {
   if (delivery_days <= 0) {
     redirect(`/dashboard/services/${id}/edit?error=Delivery days must be greater than 0`);
   }
+  if (type !== "offered" && type !== "sought") {
+    redirect(`/dashboard/services/${id}/edit?error=Invalid service type`);
+  }
 
   const { error } = await supabase
     .from("services")
@@ -86,6 +95,7 @@ export async function updateService(formData: FormData) {
       price_inr,
       delivery_days,
       delivery_label,
+      type,
     })
     .eq("id", id)
     .eq("owner_id", user.id);
@@ -140,18 +150,22 @@ export async function createOrder(serviceId: string) {
   // Fetch the service's authoritative price and owner from the database
   const { data: service, error: fetchError } = await supabase
     .from("services")
-    .select("price_inr, owner_id, is_active")
+    .select("price_inr, owner_id, is_active, type")
     .eq("id", serviceId)
     .single();
 
   if (fetchError || !service) throw new Error("Service not found");
   if (!service.is_active) throw new Error("This service is not currently available");
-  if (service.owner_id === user.id) throw new Error("You cannot purchase your own service.");
+  if (service.owner_id === user.id) throw new Error("You cannot order or apply to your own service.");
+
+  const isSought = (service as { type?: string | null }).type === "sought";
+  const buyer_id = isSought ? service.owner_id : user.id;
+  const seller_id = isSought ? user.id : service.owner_id;
 
   const { error } = await supabase.from("orders").insert({
     service_id: serviceId,
-    buyer_id: user.id,
-    seller_id: service.owner_id,   // from DB, not caller
+    buyer_id,
+    seller_id,
     status: "requested",
     price_inr: service.price_inr,  // from DB, not caller
   });

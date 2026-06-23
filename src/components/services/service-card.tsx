@@ -11,6 +11,7 @@ export interface ServiceCardProps {
     price_inr: number;
     delivery_days: number;
     delivery_label?: string | null;
+    type?: "offered" | "sought";
     owner: {
       id?: string;
       username: string;
@@ -56,6 +57,8 @@ export default function ServiceCard({
   searchTerm,
   currentUserId
 }: ServiceCardProps) {
+  const isSought = service.type === "sought";
+
   // Deterministic gradient classes based on category initials
   const initials = service.category
     .split(" ")
@@ -73,7 +76,10 @@ export default function ServiceCard({
   const charCodeSum = service.category
     .split("")
     .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const gradientClasses = colors[Math.abs(charCodeSum) % colors.length];
+  
+  const gradientClasses = isSought
+    ? "from-[#F5B83D] to-[#163832]"
+    : colors[Math.abs(charCodeSum) % colors.length];
 
   const sellerInitials = service.owner.full_name
     .split(" ")
@@ -86,7 +92,9 @@ export default function ServiceCard({
 
   if (variant === "compact") {
     return (
-      <div className="h-[60px] flex items-center justify-between gap-3 bg-surface p-2 rounded-xl border border-border/30 hover:bg-surface-sunken hover:shadow-sm transition-all duration-200 group/compact relative">
+      <div className={`h-[60px] flex items-center justify-between gap-3 bg-surface p-2 rounded-xl border ${
+        isSought ? "border-accent-gold/40 hover:border-accent-gold" : "border-border/30 hover:border-accent-green"
+      } hover:bg-surface-sunken hover:shadow-sm transition-all duration-200 group/compact relative`}>
         {/* Content Link */}
         <Link href={`/services/${service.id}`} className="flex-1 min-w-0 flex items-center gap-3">
           {/* Avatar Left */}
@@ -120,11 +128,14 @@ export default function ServiceCard({
             </div>
             
             <div className="flex justify-between items-center">
-              <span className="text-[10px] text-muted truncate">
+              <span className="text-[10px] text-muted truncate flex items-center gap-1.5">
+                {isSought && (
+                  <span className="bg-accent-gold/25 text-[9px] text-[#F5B83D] font-extrabold px-1 rounded">Seeking</span>
+                )}
                 {service.category}
               </span>
               <span className="text-xs font-bold text-ink shrink-0">
-                From ₹{service.price_inr.toLocaleString("en-IN")}
+                {isSought ? "Budget" : "From"} ₹{service.price_inr.toLocaleString("en-IN")}
               </span>
             </div>
           </div>
@@ -154,7 +165,9 @@ export default function ServiceCard({
 
   return (
     <div
-      className="group bg-surface rounded-[20px] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden border border-border/20 relative"
+      className={`group bg-surface rounded-[20px] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden border ${
+        isSought ? "border-accent-gold/40 hover:border-accent-gold" : "border-border/20"
+      } relative`}
     >
       {/* Cover Image/Gradient Area - wrapped in Link to detail page */}
       <Link href={`/services/${service.id}`} className="block relative z-0 aspect-[16/9] w-full overflow-hidden bg-surface-sunken">
@@ -170,9 +183,16 @@ export default function ServiceCard({
           </span>
         </div>
         
+        {/* Seeking Badge */}
+        {isSought && (
+          <span className="absolute top-4 left-4 bg-[#F5B83D] text-ink font-sans text-[10px] font-black tracking-wider uppercase px-2.5 py-1 rounded-full shadow-sm z-10">
+            Seeking Gig
+          </span>
+        )}
+
         {/* Delivery Days Badge (Top Right) */}
         <span className="absolute top-4 right-4 bg-ink text-white font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full shadow-sm max-w-[80%] truncate z-10">
-          {service.delivery_days}d delivery {service.delivery_label ? `(${service.delivery_label})` : ""}
+          {service.delivery_days}d {isSought ? "timeframe" : "delivery"} {service.delivery_label ? `(${service.delivery_label})` : ""}
         </span>
       </Link>
 
@@ -239,7 +259,7 @@ export default function ServiceCard({
         {/* Footer Rating/Pricing Row */}
         <Link href={`/services/${service.id}`} className="block mt-5 pt-4 border-t border-border/40 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] text-muted font-medium uppercase tracking-wider">Starting at</span>
+            <span className="text-[10px] text-muted font-medium uppercase tracking-wider">{isSought ? "Budget" : "Starting at"}</span>
             <span className="font-heading text-base font-extrabold text-ink">
               ₹{service.price_inr.toLocaleString("en-IN")}
             </span>
@@ -257,7 +277,9 @@ export default function ServiceCard({
                 </span>
               </div>
             ) : (
-              <span className="text-[11px] bg-accent-green/10 text-accent-green font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+              <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                isSought ? "bg-accent-gold/10 text-accent-gold" : "bg-accent-green/10 text-accent-green"
+              }`}>
                 New
               </span>
             )}

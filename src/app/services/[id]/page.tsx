@@ -46,6 +46,7 @@ export default async function ServiceDetailPage({
 
   const owner = Array.isArray(service.profiles) ? service.profiles[0] : service.profiles;
   const isOwner = user?.id === service.owner_id;
+  const isSought = service.type === "sought";
 
   // Server actions wrapper
   const handleOrder = async () => {
@@ -86,16 +87,18 @@ export default async function ServiceDetailPage({
         
         {/* Back Link */}
         <div className="col-span-full">
-          <Link href="/students" className="flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
-            <ArrowLeft size={16} /> Back to Talent Marketplace
+          <Link href="/services" className="flex items-center gap-2 text-sm text-muted hover:text-ink transition-colors">
+            <ArrowLeft size={16} /> Back to Freelance Services
           </Link>
         </div>
 
         {/* Left Column (Details) */}
         <div className="lg:col-span-8 flex flex-col gap-8">
           <div className="flex flex-col gap-4">
-            <span className="font-heading text-xs font-bold text-accent-green uppercase tracking-wider bg-accent-green/10 px-3 py-1 rounded-full w-fit">
-              {service.category}
+            <span className={`font-heading text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full w-fit ${
+              isSought ? "bg-accent-gold/10 text-accent-gold" : "bg-accent-green/10 text-accent-green"
+            }`}>
+              {isSought ? "Seeking: " : ""}{service.category}
             </span>
             <h1 className="font-heading text-3xl md:text-4xl font-extrabold text-ink leading-tight">
               {service.title}
@@ -110,7 +113,7 @@ export default async function ServiceDetailPage({
                   className="w-8 h-8 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-accent-green text-white font-bold flex items-center justify-center text-xs">
+                <div className={`w-8 h-8 rounded-full ${isSought ? "bg-accent-gold" : "bg-accent-green"} text-white font-bold flex items-center justify-center text-xs`}>
                   {owner?.full_name?.substring(0, 2).toUpperCase() || "US"}
                 </div>
               )}
@@ -126,15 +129,21 @@ export default async function ServiceDetailPage({
           </div>
 
           {/* Cover Placeholder / Dynamic Gradient */}
-          <div className="w-full aspect-video rounded-2xl bg-gradient-to-br from-accent-green to-accent-gold/20 flex flex-col items-center justify-center p-8 text-center text-white border border-border/40 shadow-card">
+          <div className={`w-full aspect-video rounded-2xl bg-gradient-to-br ${
+            isSought ? "from-[#F5B83D] to-[#163832]" : "from-accent-green to-accent-gold/20"
+          } flex flex-col items-center justify-center p-8 text-center text-white border border-border/40 shadow-card`}>
             <ShoppingBag size={48} className="mb-4 text-white/80" />
             <h3 className="font-heading text-xl font-bold">{service.title}</h3>
-            <p className="text-white/70 text-sm mt-2 max-w-md">Professional Freelance Service by {owner?.full_name}</p>
+            <p className="text-white/70 text-sm mt-2 max-w-md">
+              {isSought ? `Freelance Request by ${owner?.full_name}` : `Professional Freelance Service by ${owner?.full_name}`}
+            </p>
           </div>
 
           {/* About Section */}
           <section className="flex flex-col gap-4 bg-surface rounded-xl p-6 md:p-8 shadow-card border border-border/20">
-            <h2 className="font-heading text-xl font-bold text-ink">About this service</h2>
+            <h2 className="font-heading text-xl font-bold text-ink">
+              {isSought ? "Requirements Details" : "About this service"}
+            </h2>
             <div className="font-sans text-base text-ink/80 leading-relaxed whitespace-pre-wrap">
               {service.description || "No description provided."}
             </div>
@@ -142,7 +151,7 @@ export default async function ServiceDetailPage({
 
           {/* What's Included */}
           <section className="flex flex-col gap-4 bg-surface rounded-xl p-6 md:p-8 shadow-card border border-border/20">
-            <h2 className="font-heading text-xl font-bold text-ink">What&apos;s included</h2>
+            <h2 className="font-heading text-xl font-bold text-ink">What&apos;s expected</h2>
             <ul className="flex flex-col gap-3 font-sans text-sm text-ink/80">
               <li className="flex items-start gap-2">
                 <CheckCircle size={18} className="text-accent-green shrink-0 mt-0.5" />
@@ -192,13 +201,15 @@ export default async function ServiceDetailPage({
             <div className="hidden lg:flex bg-surface rounded-2xl p-6 shadow-card flex-col gap-6 border border-border">
               <div className="flex justify-between items-end">
                 <div>
-                  <span className="text-xs text-muted uppercase tracking-wider font-semibold">Pricing</span>
+                  <span className="text-xs text-muted uppercase tracking-wider font-semibold">
+                    {isSought ? "Budget" : "Pricing"}
+                  </span>
                   <div className="font-heading text-3xl font-extrabold text-ink mt-1">
                     ₹{service.price_inr.toLocaleString()}
                   </div>
                 </div>
                 <div className="font-sans text-xs text-muted mb-1 flex items-center gap-1">
-                  <Clock size={14} /> Delivery in {service.delivery_days} days {service.delivery_label ? `(${service.delivery_label})` : ""}
+                  <Clock size={14} /> {isSought ? "Timeframe" : "Delivery"} in {service.delivery_days} days {service.delivery_label ? `(${service.delivery_label})` : ""}
                 </div>
               </div>
 
@@ -208,17 +219,17 @@ export default async function ServiceDetailPage({
                     href={`/dashboard/services/${service.id}/edit`}
                     className="w-full rounded-full bg-ink py-3 font-semibold text-sm text-white hover:opacity-90 transition-opacity text-center cursor-pointer"
                   >
-                    Edit Service
+                    Edit {isSought ? "Request" : "Service"}
                   </Link>
                 ) : (
                   <>
                     <form action={handleOrder}>
                       <SubmitButton
-                        loadingText="Ordering..."
+                        loadingText={isSought ? "Applying..." : "Ordering..."}
                         variant="gold"
                         className="w-full text-sm py-3 font-bold"
                       >
-                        Order Now
+                        {isSought ? "Apply to Request" : "Order Now"}
                       </SubmitButton>
                     </form>
                     <form action={handleMessage}>
@@ -227,7 +238,7 @@ export default async function ServiceDetailPage({
                         variant="secondary"
                         className="w-full text-sm py-3 font-semibold"
                       >
-                        Message Seller
+                        {isSought ? "Message Buyer" : "Message Seller"}
                       </SubmitButton>
                     </form>
                   </>
@@ -246,7 +257,7 @@ export default async function ServiceDetailPage({
                   className="w-16 h-16 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-accent-green text-white font-bold flex items-center justify-center text-xl">
+                <div className={`w-16 h-16 rounded-full ${isSought ? "bg-accent-gold" : "bg-accent-green"} text-white font-bold flex items-center justify-center text-xl`}>
                   {owner?.full_name?.substring(0, 2).toUpperCase() || "US"}
                 </div>
               )}
@@ -276,7 +287,9 @@ export default async function ServiceDetailPage({
       {/* Mobile Sticky Bottom Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border px-6 py-4 flex items-center justify-between shadow-[0_-4px_16px_rgba(22,56,50,0.08)]">
         <div>
-          <span className="text-[10px] text-muted uppercase tracking-wider font-semibold">Price</span>
+          <span className="text-[10px] text-muted uppercase tracking-wider font-semibold">
+            {isSought ? "Budget" : "Price"}
+          </span>
           <div className="font-heading text-xl font-bold text-ink">
             ₹{service.price_inr.toLocaleString()}
           </div>
@@ -287,7 +300,7 @@ export default async function ServiceDetailPage({
               href={`/dashboard/services/${service.id}/edit`}
               className="rounded-full bg-ink px-6 py-2.5 font-semibold text-xs text-white hover:opacity-90 transition-opacity text-center cursor-pointer"
             >
-              Edit Service
+              Edit
             </Link>
           ) : (
             <>
@@ -303,12 +316,12 @@ export default async function ServiceDetailPage({
               </form>
               <form action={handleOrder}>
                 <SubmitButton
-                  loadingText="Ordering..."
+                  loadingText={isSought ? "Applying..." : "Ordering..."}
                   variant="gold"
                   size="sm"
                   className="px-4 py-2 font-bold text-xs"
                 >
-                  Order Now
+                  {isSought ? "Apply" : "Order Now"}
                 </SubmitButton>
               </form>
             </>

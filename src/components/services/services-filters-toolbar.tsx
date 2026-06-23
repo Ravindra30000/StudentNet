@@ -3,14 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, ChevronDown, X } from "lucide-react";
-
-const PRESET_PRICES = [
-  { label: "Any Price", min: null, max: null },
-  { label: "Free", min: null, max: "0" },
-  { label: "Under ₹500", min: null, max: "500" },
-  { label: "Under ₹1,000", min: null, max: "1000" },
-  { label: "Under ₹5,000", min: null, max: "5000" },
-];
+import { Combobox } from "@/components/ui/combobox";
 
 export default function ServicesFiltersToolbar() {
   const router = useRouter();
@@ -24,33 +17,110 @@ export default function ServicesFiltersToolbar() {
   const currentMaxPrice = searchParams.get("max_price") ?? "";
   const currentDelivery = searchParams.get("delivery") ?? "any";
   const currentMinRating = searchParams.get("min_rating") ?? "";
+  const currentType = searchParams.get("type") ?? "";
 
-  const [searchQuery, setSearchQuery] = useState(currentSearch);
-  const [minPrice, setMinPrice] = useState(currentMinPrice);
-  const [maxPrice, setMaxPrice] = useState(currentMaxPrice);
+  const getInitialDeliveryLabel = (val: string) => {
+    if (!val || val === "any") return "Anytime";
+    if (val === "1") return "1 day (Express)";
+    if (val === "3") return "3 days";
+    if (val === "7") return "7 days";
+    if (val === "14") return "14 days";
+    if (val === "30") return "30 days";
+    const parsed = parseInt(val);
+    return isNaN(parsed) ? "Anytime" : `${val} days`;
+  };
+
+  const getInitialRatingLabel = (val: string) => {
+    if (!val || val === "any") return "Any Rating";
+    if (val === "5.0" || val === "5") return "5.0 ★";
+    if (val === "4.5") return "4.5 ★ & up";
+    if (val === "4.0") return "4.0 ★ & up";
+    if (val === "3.5") return "3.5 ★ & up";
+    if (val === "3.0") return "3.0 ★ & up";
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? "Any Rating" : `${val} ★`;
+  };
+
+  // Staged filter state
+  const [stagedQ, setStagedQ] = useState(currentSearch);
+  const [stagedSort, setStagedSort] = useState(currentSort);
+  const [stagedMinPrice, setStagedMinPrice] = useState(currentMinPrice);
+  const [stagedMaxPrice, setStagedMaxPrice] = useState(currentMaxPrice);
+  const [stagedDelivery, setStagedDelivery] = useState(() => getInitialDeliveryLabel(currentDelivery));
+  const [stagedMinRating, setStagedMinRating] = useState(() => getInitialRatingLabel(currentMinRating));
+  const [stagedType, setStagedType] = useState(currentType);
 
   const [prevSearch, setPrevSearch] = useState(currentSearch);
   const [prevMinPrice, setPrevMinPrice] = useState(currentMinPrice);
   const [prevMaxPrice, setPrevMaxPrice] = useState(currentMaxPrice);
+  const [prevDelivery, setPrevDelivery] = useState(currentDelivery);
+  const [prevMinRating, setPrevMinRating] = useState(currentMinRating);
+  const [prevType, setPrevType] = useState(currentType);
+  const [prevSort, setPrevSort] = useState(currentSort);
 
+  // Sync state if URL changes externally (like clear all)
   if (currentSearch !== prevSearch) {
-    setSearchQuery(currentSearch);
+    setStagedQ(currentSearch);
     setPrevSearch(currentSearch);
   }
-
   if (currentMinPrice !== prevMinPrice) {
-    setMinPrice(currentMinPrice);
+    setStagedMinPrice(currentMinPrice);
     setPrevMinPrice(currentMinPrice);
   }
-
   if (currentMaxPrice !== prevMaxPrice) {
-    setMaxPrice(currentMaxPrice);
+    setStagedMaxPrice(currentMaxPrice);
     setPrevMaxPrice(currentMaxPrice);
   }
+  if (currentDelivery !== prevDelivery) {
+    setStagedDelivery(getInitialDeliveryLabel(currentDelivery));
+    setPrevDelivery(currentDelivery);
+  }
+  if (currentMinRating !== prevMinRating) {
+    setStagedMinRating(getInitialRatingLabel(currentMinRating));
+    setPrevMinRating(currentMinRating);
+  }
+  if (currentType !== prevType) {
+    setStagedType(currentType);
+    setPrevType(currentType);
+  }
+  if (currentSort !== prevSort) {
+    setStagedSort(currentSort);
+    setPrevSort(currentSort);
+  }
 
-  const applyFilters = (updates: Record<string, string | null>) => {
+  const handleApply = () => {
+    // Parse delivery speed
+    let deliveryVal = stagedDelivery;
+    if (deliveryVal === "Anytime" || deliveryVal === "") {
+      deliveryVal = "any";
+    } else if (deliveryVal.toLowerCase().includes("1 day")) {
+      deliveryVal = "1";
+    } else {
+      const parsed = parseInt(deliveryVal);
+      deliveryVal = isNaN(parsed) ? "any" : parsed.toString();
+    }
+
+    // Parse seller rating
+    let ratingVal = stagedMinRating;
+    if (ratingVal === "Any Rating" || ratingVal === "") {
+      ratingVal = "";
+    } else {
+      const parsed = parseFloat(ratingVal);
+      ratingVal = isNaN(parsed) ? "" : parsed.toString();
+    }
+
     const params = new URLSearchParams(searchParams.toString());
     params.delete("page"); // Reset pagination
+
+    const updates = {
+      q: stagedQ.trim(),
+      sort: stagedSort,
+      min_price: stagedMinPrice,
+      max_price: stagedMaxPrice,
+      delivery: deliveryVal,
+      min_rating: ratingVal,
+      type: stagedType || null,
+    };
 
     Object.entries(updates).forEach(([key, value]) => {
       if (value === null || value === "" || value === "any") {
@@ -68,10 +138,18 @@ export default function ServicesFiltersToolbar() {
 
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    applyFilters({ q: searchQuery });
+    handleApply();
   };
 
   const handleClearAll = () => {
+    setStagedQ("");
+    setStagedSort("relevant");
+    setStagedMinPrice("");
+    setStagedMaxPrice("");
+    setStagedDelivery("Anytime");
+    setStagedMinRating("Any Rating");
+    setStagedType("");
+
     startTransition(() => {
       const params = new URLSearchParams();
       const cat = searchParams.get("category");
@@ -84,34 +162,69 @@ export default function ServicesFiltersToolbar() {
     });
   };
 
-  const isPresetActive = (preset: typeof PRESET_PRICES[0]) => {
-    if (preset.min === null && preset.max === null) {
-      return !currentMinPrice && !currentMaxPrice;
-    }
-    return (
-      (currentMinPrice === (preset.min || "")) &&
-      (currentMaxPrice === (preset.max || ""))
-    );
-  };
-
-  const hasActiveFilters =
+  const hasActiveFilters = !!(
     currentSearch ||
     currentSort !== "relevant" ||
     currentMinPrice ||
     currentMaxPrice ||
-    currentDelivery !== "any" ||
-    currentMinRating;
+    (currentDelivery && currentDelivery !== "any") ||
+    currentMinRating ||
+    currentType
+  );
 
   return (
     <div className="w-full flex flex-col gap-6 bg-surface p-6 rounded-3xl border border-border/40 shadow-sm">
+      {/* Type tabs (Segment Control) */}
+      <div className="flex bg-surface-sunken p-1 rounded-full border border-border w-fit max-w-full overflow-x-auto self-start">
+        <button
+          type="button"
+          onClick={() => {
+            setStagedType("");
+          }}
+          className={`text-center py-2 px-5 rounded-full text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+            stagedType === ""
+              ? "bg-[#163832] text-white shadow-sm"
+              : "text-muted hover:text-ink"
+          }`}
+        >
+          All Gigs
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setStagedType("offered");
+          }}
+          className={`text-center py-2 px-5 rounded-full text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+            stagedType === "offered"
+              ? "bg-[#163832] text-white shadow-sm"
+              : "text-muted hover:text-ink"
+          }`}
+        >
+          Offered (Delivering)
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setStagedType("sought");
+          }}
+          className={`text-center py-2 px-5 rounded-full text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+            stagedType === "sought"
+              ? "bg-[#163832] text-white shadow-sm"
+              : "text-muted hover:text-ink"
+          }`}
+        >
+          Sought (Seeking)
+        </button>
+      </div>
+
       {/* Top Search bar */}
       <div className="flex flex-col md:flex-row gap-3 w-full">
         <form onSubmit={handleSearchSubmit} className="relative flex-1 group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted w-4.5 h-4.5 transition-colors group-focus-within:text-accent-green" />
           <input
             type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={stagedQ}
+            onChange={(e) => setStagedQ(e.target.value)}
             placeholder="Search services (e.g. 'landing page', 'figma')..."
             className="w-full pl-11 pr-20 py-2.5 rounded-full border border-border bg-surface-sunken font-sans text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent-green/20 focus:border-accent-green transition-all"
           />
@@ -126,8 +239,8 @@ export default function ServicesFiltersToolbar() {
         {/* Sort select */}
         <div className="relative shrink-0 min-w-[180px]">
           <select
-            value={currentSort}
-            onChange={(e) => applyFilters({ sort: e.target.value })}
+            value={stagedSort}
+            onChange={(e) => setStagedSort(e.target.value)}
             className="appearance-none w-full pl-4 pr-10 py-2.5 rounded-full bg-surface-sunken hover:bg-border/60 font-sans text-sm font-semibold text-ink border border-border outline-none transition-colors cursor-pointer"
           >
             <option value="relevant">Most Relevant</option>
@@ -140,39 +253,8 @@ export default function ServicesFiltersToolbar() {
         </div>
       </div>
 
-      {/* Advanced pricing preset chips & custom bounds */}
+      {/* Advanced pricing bounds */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-border/30">
-        {/* Preset price chips */}
-        <div className="flex flex-col gap-2">
-          <span className="text-[10px] text-muted font-extrabold uppercase tracking-wider">
-            Price Presets
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            {PRESET_PRICES.map((preset, idx) => {
-              const active = isPresetActive(preset);
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() =>
-                    applyFilters({
-                      min_price: preset.min,
-                      max_price: preset.max,
-                    })
-                  }
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
-                    active
-                      ? "bg-[#163832] text-white border-[#163832]"
-                      : "bg-surface-sunken hover:bg-border/30 text-muted hover:text-ink border-border/40"
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Custom price range */}
         <div className="flex flex-col gap-2">
           <span className="text-[10px] text-muted font-extrabold uppercase tracking-wider">
@@ -184,15 +266,9 @@ export default function ServicesFiltersToolbar() {
               <input
                 type="number"
                 placeholder="Min"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                onBlur={() => applyFilters({ min_price: minPrice })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    applyFilters({ min_price: minPrice });
-                  }
-                }}
-                className="w-24 pl-6 pr-3 py-1.5 rounded-lg border border-border bg-surface-sunken font-sans text-xs font-semibold text-ink focus:outline-none focus:ring-1 focus:ring-[#163832] focus:border-[#163832]"
+                value={stagedMinPrice}
+                onChange={(e) => setStagedMinPrice(e.target.value)}
+                className="w-28 pl-6 pr-3 py-1.5 rounded-lg border border-border bg-surface-sunken font-sans text-xs font-semibold text-ink focus:outline-none focus:ring-1 focus:ring-[#163832] focus:border-[#163832]"
               />
             </div>
             <span className="text-muted text-xs font-bold">—</span>
@@ -201,83 +277,71 @@ export default function ServicesFiltersToolbar() {
               <input
                 type="number"
                 placeholder="Max"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                onBlur={() => applyFilters({ max_price: maxPrice })}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    applyFilters({ max_price: maxPrice });
-                  }
-                }}
-                className="w-24 pl-6 pr-3 py-1.5 rounded-lg border border-border bg-surface-sunken font-sans text-xs font-semibold text-ink focus:outline-none focus:ring-1 focus:ring-[#163832] focus:border-[#163832]"
+                value={stagedMaxPrice}
+                onChange={(e) => setStagedMaxPrice(e.target.value)}
+                className="w-28 pl-6 pr-3 py-1.5 rounded-lg border border-border bg-surface-sunken font-sans text-xs font-semibold text-ink focus:outline-none focus:ring-1 focus:ring-[#163832] focus:border-[#163832]"
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Speed and Star constraints */}
+      {/* Speed, Rating, and Apply constraints */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/30">
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="flex flex-wrap items-center gap-6 z-30">
           {/* Delivery speed selector */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 min-w-[170px]">
             <span className="text-[10px] text-muted font-extrabold uppercase tracking-wider">
               Delivery Speed
             </span>
-            <div className="relative min-w-[150px]">
-              <select
-                value={currentDelivery}
-                onChange={(e) => applyFilters({ delivery: e.target.value })}
-                className="appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg bg-surface-sunken hover:bg-border/60 font-sans text-xs font-semibold text-ink border border-border outline-none cursor-pointer"
-              >
-                <option value="any">Anytime</option>
-                <option value="1">Express (24 hours)</option>
-                <option value="3">Within 3 days</option>
-                <option value="7">Within 7 days</option>
-                <option value="14">Within 14 days</option>
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/70 w-3 h-3 pointer-events-none" />
-            </div>
+            <Combobox
+              options={["Anytime", "1 day (Express)", "3 days", "7 days", "14 days", "30 days"]}
+              value={stagedDelivery}
+              onChange={setStagedDelivery}
+              placeholder="Select or type delivery days"
+              freeForm={true}
+            />
           </div>
 
           {/* Rating constraint selector */}
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 min-w-[170px]">
             <span className="text-[10px] text-muted font-extrabold uppercase tracking-wider">
               Seller Rating
             </span>
-            <div className="relative min-w-[150px]">
-              <select
-                value={currentMinRating}
-                onChange={(e) => applyFilters({ min_rating: e.target.value })}
-                className="appearance-none w-full pl-3 pr-8 py-1.5 rounded-lg bg-surface-sunken hover:bg-border/60 font-sans text-xs font-semibold text-ink border border-border outline-none cursor-pointer"
-              >
-                <option value="">Any Rating</option>
-                <option value="4.5">4.5 ★ & up</option>
-                <option value="4.0">4.0 ★ & up</option>
-                <option value="3.5">3.5 ★ & up</option>
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink/70 w-3 h-3 pointer-events-none" />
-            </div>
+            <Combobox
+              options={["Any Rating", "5.0 ★", "4.5 ★ & up", "4.0 ★ & up", "3.5 ★ & up", "3.0 ★ & up"]}
+              value={stagedMinRating}
+              onChange={setStagedMinRating}
+              placeholder="Select or type rating"
+              freeForm={true}
+            />
           </div>
         </div>
 
-        {/* Clear and Pending status */}
-        <div className="flex items-center gap-3 self-end md:self-auto">
+        {/* Clear and Apply status */}
+        <div className="flex items-center gap-3 self-end md:self-auto z-10">
           {hasActiveFilters && (
             <button
               onClick={handleClearAll}
-              className="flex items-center gap-1.5 text-xs font-bold text-danger hover:underline cursor-pointer"
+              className="flex items-center gap-1.5 text-xs font-bold text-danger hover:underline cursor-pointer py-2 px-3"
             >
               <X className="w-3.5 h-3.5" />
-              Clear Filters
+              Clear
             </button>
           )}
 
-          {isPending && (
-            <span className="text-xs text-muted font-medium animate-pulse">
-              Filtering...
-            </span>
-          )}
+          <button
+            onClick={handleApply}
+            disabled={isPending}
+            className="flex items-center gap-2 bg-[#163832] hover:bg-[#1e4d42] active:bg-[#0f2420] text-white font-sans text-xs font-bold px-6 py-2.5 rounded-full transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap shadow-sm"
+          >
+            {isPending ? (
+              <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Search className="w-3.5 h-3.5" />
+            )}
+            Apply Filters
+          </button>
         </div>
       </div>
     </div>

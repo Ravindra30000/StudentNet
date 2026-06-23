@@ -30,6 +30,7 @@ interface ServicesPageProps {
     max_price?: string;
     delivery?: string;
     min_rating?: string;
+    type?: string;
     page?: string;
   }>;
 }
@@ -44,6 +45,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     max_price,
     delivery,
     min_rating,
+    type,
     page = "1",
   } = await searchParams;
 
@@ -73,6 +75,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     delivery_days,
     created_at,
     is_active,
+    type,
     owner:profiles!owner_id${seller ? "!inner" : ""} (
       id,
       username,
@@ -96,6 +99,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     queryBuilder = queryBuilder.eq("owner.username", seller);
   }
 
+  if (type) {
+    queryBuilder = queryBuilder.eq("type", type);
+  }
+
   if (q) {
     const isAlphanumeric = /[a-zA-Z0-9]/.test(q);
     if (isAlphanumeric) {
@@ -117,7 +124,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   }
 
   if (delivery && delivery !== "any") {
-    queryBuilder = queryBuilder.lte("delivery_days", Number(delivery));
+    const parsedDelivery = parseInt(delivery);
+    if (!isNaN(parsedDelivery)) {
+      queryBuilder = queryBuilder.lte("delivery_days", parsedDelivery);
+    }
   }
 
   const { data: rawServices } = await queryBuilder;
@@ -140,6 +150,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     delivery_days: number;
     created_at: string;
     is_active: boolean;
+    type?: string | null;
     owner: RawServiceOwner | null;
   }
 
@@ -159,6 +170,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
       delivery_days: s.delivery_days,
       created_at: s.created_at,
       score,
+      type: (s.type === 'sought' ? 'sought' : 'offered') as 'offered' | 'sought',
       owner: {
         id: s.owner?.id ?? "",
         username: s.owner?.username ?? "",
@@ -174,8 +186,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   // Apply min_rating filter in JS since rating is derived
   let services = mappedServices;
   if (min_rating) {
-    const minRatingVal = Number(min_rating);
-    services = mappedServices.filter((s) => (s.owner.avg_rating ?? 0) >= minRatingVal);
+    const minRatingVal = parseFloat(min_rating);
+    if (!isNaN(minRatingVal)) {
+      services = mappedServices.filter((s) => (s.owner.avg_rating ?? 0) >= minRatingVal);
+    }
   }
 
   // 4. Sort Services
@@ -213,6 +227,7 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     if (max_price) params.set("max_price", max_price);
     if (delivery) params.set("delivery", delivery);
     if (min_rating) params.set("min_rating", min_rating);
+    if (type) params.set("type", type);
     
     Object.entries(updates).forEach(([k, v]) => {
       if (v === null) {
